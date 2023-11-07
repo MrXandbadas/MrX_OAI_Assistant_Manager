@@ -90,9 +90,12 @@ def append_to_chat_history(thread_id, user_input):
 
 async def display_chat_history(thread_id):
     response = await client.beta.threads.messages.list(thread_id=thread_id)
-    for message in response.data:
-        role = "You" if message.role == "user" else "Assistant"
-        print(f"{role}: {message.content[0]['text']['value']}")
+    # Reverse the order of messages to display them from oldest to newest
+    for message in reversed(response.data):
+        role = message.role
+        message_text = message.content[0].text.value
+        #Fix this silly mistake
+        print(f"{role}: {message_text}")
 
 async def handle_customer_inquiries():
     assistant_id = await find_or_create_assistant(

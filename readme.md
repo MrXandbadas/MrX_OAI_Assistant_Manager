@@ -1,8 +1,13 @@
 
-# README for Customer Inquiry Script
+# README for Customer Inquiry Assistant Script
 
 ## Overview
 This script is designed to handle customer inquiries using OpenAI's new API features. It creates and manages a chat thread, saving the thread ID for continuous conversation. The script handles inquiries asynchronously, ensuring efficient and real-time interaction with the assistant.
+
+## Note - I hate to uninstall and reinstall the openai python package
+```bash
+pip uninstall openai
+```
 
 ## Prerequisites
 - Python 3.7 or higher

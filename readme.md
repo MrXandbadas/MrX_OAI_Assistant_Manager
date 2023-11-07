@@ -4,7 +4,7 @@
 ## Overview
 This script is designed to handle customer inquiries using OpenAI's new API features. It creates and manages a chat thread, saving the thread ID for continuous conversation. The script handles inquiries asynchronously, ensuring efficient and real-time interaction with the assistant.
 
-## Note - I hate to uninstall and reinstall the openai python package
+## Note - I had to uninstall and reinstall the openai python package to use the new Assistant and Beta featureset
 ```bash
 pip uninstall openai
 ```

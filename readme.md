@@ -21,11 +21,12 @@ pip uninstall openai
    pip install openai
    ```
 
+### Dont forget to cd into the folder!
 ## Usage
 1. Replace `YOUR_API_KEY` and `YOUR_ORG_ID` with your actual OpenAI API key and organization ID in the script.
 2. Run the script in your Python environment:
    ```bash
-   python customer_inquiry_script.py
+   python customer_inquiry_assistant.py
    ```
 3. Interact with the script by typing customer inquiries. Use 'exit', 'quit', or 'bye' to end the session.
 

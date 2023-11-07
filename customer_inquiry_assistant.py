@@ -1,18 +1,95 @@
 import asyncio
 import json
 import os
-from openai._client import AsyncOpenAI # The Async Version
-from transformers import GPT2Tokenizer
-
-
-tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-
+from openai._client import AsyncOpenAI
+import gpt3_tokenizer
 
 api_key = 'YOUR_API_KEY'
 organization_id = 'YOUR_ORG_ID'
 client = AsyncOpenAI(api_key=api_key, organization=organization_id)
 
 json_file = 'thread_data.json'
+
+async def list_messages(thread_id, limit=20, order='desc', after=None, before=None):
+    """
+    Lists messages from a specific thread.
+
+    Args:
+        thread_id (str): The ID of the thread to list messages from.
+        limit (int, optional): Number of messages to return. Defaults to 20.
+        order (str, optional): Order of messages ('asc' or 'desc'). Defaults to 'desc'.
+        after (str, optional): Cursor for pagination to fetch messages after a certain ID.
+        before (str, optional): Cursor for pagination to fetch messages before a certain ID.
+
+    Returns:
+        list: A list of message objects.
+    """
+    return await client.beta.threads.messages.list(thread_id=thread_id, limit=limit, order=order, after=after, before=before)
+
+async def retrieve_message(thread_id, message_id):
+    """
+    Retrieves a specific message from a thread.
+
+    Args:
+        thread_id (str): The ID of the thread containing the message.
+        message_id (str): The ID of the message to retrieve.
+
+    Returns:
+        dict: The message object.
+    """
+    return await client.beta.threads.messages.retrieve(thread_id=thread_id, message_id=message_id)
+
+
+
+async def create_thread(messages=None, metadata=None):
+    """
+    Creates a new thread with optional starting messages and metadata.
+    
+    Args:
+        messages (list, optional): A list of messages to start the thread with.
+        metadata (dict, optional): Metadata associated with the thread.
+
+    Returns:
+        dict: The created thread object.
+    """
+    return await client.beta.threads.create(messages=messages, metadata=metadata)
+
+async def retrieve_thread(thread_id):
+    """
+    Retrieves details of a specific thread by its ID.
+    
+    Args:
+        thread_id (str): The ID of the thread to retrieve.
+
+    Returns:
+        dict: The thread object.
+    """
+    return await client.beta.threads.retrieve(thread_id)
+
+async def modify_thread(thread_id, metadata):
+    """
+    Modifies a thread's metadata.
+    
+    Args:
+        thread_id (str): The ID of the thread to modify.
+        metadata (dict): The new metadata for the thread.
+
+    Returns:
+        dict: The modified thread object.
+    """
+    return await client.beta.threads.modify(thread_id, metadata=metadata)
+
+async def delete_thread(thread_id):
+    """
+    Deletes a thread by its ID.
+    
+    Args:
+        thread_id (str): The ID of the thread to delete.
+
+    Returns:
+        dict: The deletion status.
+    """
+    return await client.beta.threads.delete(thread_id)
 
 async def delete_assistant(assistant_id):
     """
@@ -204,6 +281,9 @@ async def get_or_create_thread():
     if not thread_id:
         thread = await client.beta.threads.create()
         thread_id = thread.id
+        # Save the thread ID to the JSON file
+        data['thread_id'] = thread_id
+        write_json(json_file, data)
 
     return thread_id
 
@@ -279,7 +359,7 @@ async def update_assistant(assistant_id, name=None, description=None, instructio
 
 def count_tokens(text):
     """
-    Counts the number of tokens in a given text string based on OpenAI's tokenization.
+    Counts the number of tokens in a given text string using gpt3_tokenizer.
 
     Args:
         text (str): The text to be tokenized.
@@ -287,8 +367,7 @@ def count_tokens(text):
     Returns:
         int: The number of tokens in the text.
     """
-    # This is a simplified token counter. OpenAI's actual tokenization is more complex.
-    return len(tokenizer.encode(text))
+    return gpt3_tokenizer.count_tokens(text)
 
 
 async def send_message(thread_id, content, role="user"):
@@ -394,6 +473,17 @@ async def handle_customer_inquiries():
     # Display existing chat history
     await display_chat_history(thread_id)
 
+    prev_messages = await list_messages(thread_id)
+    if prev_messages.data != []:
+            # Process each message here
+        print("Message Found")
+            
+
+    else:
+        print("No messages found in the thread.")
+
+
+    # get the thread and count all the message tokens
     total_tokens_used = 0
 
     try:
@@ -424,4 +514,3 @@ async def handle_customer_inquiries():
 
 if __name__ == "__main__":
     asyncio.run(handle_customer_inquiries())
-

@@ -1,8 +1,4 @@
 import asyncio
-import json
-import os
-from openai._client import AsyncOpenAI
-import gpt3_tokenizer
 from agent_class import OAI_Agent
 
 api_key='API KEY'

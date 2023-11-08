@@ -1,13 +1,10 @@
+from flask import Flask, request, render_template, jsonify
 import asyncio
 import json
 import os
 from openai._client import AsyncOpenAI
 import gpt3_tokenizer
 
-
-
-#api_key = 'YOUR_API_KEY'
-#organization_id = 'YOUR_ORG_ID'
 class OAI_Agent():
     def __init__(self, api_key, organization_id):
         self.api_key = api_key
@@ -15,9 +12,15 @@ class OAI_Agent():
         self.assistant_id = None
         self.client = AsyncOpenAI(api_key=api_key, organization=organization_id)
         self.json_file = 'thread_data.json'
+        self.assistant_file="assistant_data.json"
         
     async def get_json_file(self):
         return self.json_file
+    
+    async def get_assistant_file(self):
+        return self.assistant_file
+    
+
     async def list_messages(self, thread_id, limit=4, order='desc', after=None, before=None):
         """
         Lists messages from a specific thread.
@@ -273,16 +276,22 @@ class OAI_Agent():
 
 
     def read_json(self, filename):
-        if os.path.exists(filename):
-            with open(filename, 'r') as file:
-                return json.load(file)
-        return {}
+        try:
+            with open(filename) as file:
+                data = json.load(file)
+            return data
+        except FileNotFoundError:
+            return {}
+        except json.decoder.JSONDecodeError:
+            return {}
+        
 
-    def write_json(filename, data):
-        with open(filename, 'w') as file:
-            json.dump(data, file)
+    def write_json(self, filename, data, append=False):
+        mode = 'a' if append else 'w'
+        with open(filename, mode) as file:
+            json.dump(data, file, indent=4)
 
-    async def get_or_create_thread(self):
+    async def get_or_create_thread(self,thread_name=None):
         """
         Get or create a thread of Messages/content.
 
@@ -292,57 +301,76 @@ class OAI_Agent():
         :return: The ID of the thread.
         :rtype: str
         """
+
+        if thread_name is None:
+            thread_name = "Deafult_Chat"
+            
         data = self.read_json(self.json_file)
-        thread_id = data.get('thread_id')
+        #print(f"Data:   {data}")
+        thread_id = data.get(thread_name)
+        #print(f"Thread ID:   {thread_id}")
 
         if not thread_id:
             thread = await self.client.beta.threads.create()
             thread_id = thread.id
             # Save the thread ID to the JSON file
-            data['thread_id'] = thread_id
-            self.write_json(self.json_file, data)
+            data[thread_name] = thread_id
+            self.write_json(self.json_file, data, append=False)
 
         return thread_id
 
     async def list_assistants(self):
         response = await self.client.beta.assistants.list()
         return {assistant.name: assistant.id for assistant in response.data}
-
-    async def find_or_create_assistant(self,name, instructions, tools, model):
-        """
-    Finds an existing assistant by name or creates a new one. 
-    If the assistant exists but with different arguments, it updates the assistant.
-
-    Args:
-        name (str): The name of the assistant.
-        instructions (str): Instructions for the assistant.
-        tools (list): List of tools for the assistant.
-        model (str): Model ID for the assistant.
     
-    Returns:
-        str: The ID of the found or created assistant.
-    """
+    
 
+    async def find_or_create_assistant(self, send_name, instructions, tools, model):
         assistants = await self.list_assistants()
-        if name in assistants:
-            assistant_id = assistants[name]
+        data = self.read_json(self.assistant_file)
+
+        for assistant in assistants:
+            data[assistant] = {
+                'id': assistants[assistant],
+            }
+
+        if send_name in assistants:
+            assistant_id = assistants[send_name]
             existing_assistant = await self.retrieve_assistant(assistant_id)
-            
-            # Check if existing assistant's configuration matches the new arguments
+
             if existing_assistant.instructions != instructions or existing_assistant.tools != tools or existing_assistant.model != model:
                 # Update the assistant with new arguments
-                await self.update_assistant(assistant_id, name=name, description=existing_assistant.description, instructions=instructions, tools=tools)
-            
+                await self.update_assistant(assistant_id, name=send_name, description=existing_assistant.description, instructions=instructions, tools=tools)
+
+            # Update or confirm the assistant information in the JSON file
+            data[send_name] = {
+                'id': assistant_id,
+                'instructions': instructions,
+                'tools': tools,
+                'model': model
+            }
+            self.write_json(self.assistant_file, data)
             return assistant_id
         else:
-            # Create a new assistant if not found
+            # Create a new assistant
             assistant = await self.client.beta.assistants.create(
                 instructions=instructions,
-                name=name,
+                name=send_name,
                 tools=tools,
                 model=model
             )
-            return assistant.id
+            assistant_id = assistant.id
+
+            # Save the new assistant information in the JSON file
+            data[send_name] = {
+                'id': assistant_id,
+                'instructions': instructions,
+                'tools': tools,
+                'model': model
+            }
+            self.write_json(self.assistant_file, data)
+            return assistant_id
+
 
 
     async def update_assistant(self,assistant_id, name=None, description=None, instructions=None, tools=None):

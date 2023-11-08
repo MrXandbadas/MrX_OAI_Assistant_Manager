@@ -5,14 +5,17 @@ import os
 from openai._client import AsyncOpenAI
 import gpt3_tokenizer
 
+
+
+#api_key = 'YOUR_API_KEY'
+#organization_id = 'YOUR_ORG_ID'
 class OAI_Agent():
     def __init__(self, api_key, organization_id):
         self.api_key = api_key
         self.organization_id = organization_id
         self.assistant_id = None
-        self.thread = None
         self.client = AsyncOpenAI(api_key=api_key, organization=organization_id)
-        self.json_file = 'threads_agents.json'
+        self.json_file = 'thread_data.json'
         
     async def get_json_file(self):
         return self.json_file
@@ -70,14 +73,7 @@ class OAI_Agent():
         Returns:
             dict: The thread object.
         """
-        if self.thread is None:
-            self.thread = await self.client.beta.threads.create()
-            return self.thread
-        else:
-            if self.thread == self.client.beta.threads.retrieve(thread_id):
-                return self.thread
-            else:
-                return await self.client.beta.threads.retrieve(thread_id)
+        return await self.client.beta.threads.retrieve(thread_id)
     
     async def list_threads(self):
         """
@@ -283,11 +279,11 @@ class OAI_Agent():
                 return json.load(file)
         return {}
 
-    def write_json(self, filename, data):
+    def write_json(filename, data):
         with open(filename, 'w') as file:
             json.dump(data, file)
 
-    async def get_or_create_thread(self,get_thread=None):
+    async def get_or_create_thread(self):
         """
         Get or create a thread of Messages/content.
 
@@ -298,24 +294,16 @@ class OAI_Agent():
         :rtype: str
         """
         data = self.read_json(self.json_file)
-        thread_id = None
-
-        for thread in data.get('threads', []):
-            if thread['name'] == get_thread:
-                thread_id = thread['id']
-                break
+        thread_id = data.get('thread_id')
 
         if not thread_id:
             thread = await self.client.beta.threads.create()
             thread_id = thread.id
-            # Add the new thread to the JSON file
-            data['threads'].append({
-                'name': 'General Discussion',
-                'id': thread_id
-            })
+            # Save the thread ID to the JSON file
+            data['thread_id'] = thread_id
             self.write_json(self.json_file, data)
 
-        return thread
+        return thread_id
 
     async def list_assistants(self):
         response = await self.client.beta.assistants.list()
@@ -323,18 +311,18 @@ class OAI_Agent():
 
     async def find_or_create_assistant(self,name, instructions, tools, model):
         """
-        Finds an existing assistant by name or creates a new one. 
-        If the assistant exists but with different arguments, it updates the assistant.
+    Finds an existing assistant by name or creates a new one. 
+    If the assistant exists but with different arguments, it updates the assistant.
 
-        Args:
-            name (str): The name of the assistant.
-            instructions (str): Instructions for the assistant.
-            tools (list): List of tools for the assistant.
-            model (str): Model ID for the assistant.
-        
-        Returns:
-            str: The ID of the found or created assistant.
-        """
+    Args:
+        name (str): The name of the assistant.
+        instructions (str): Instructions for the assistant.
+        tools (list): List of tools for the assistant.
+        model (str): Model ID for the assistant.
+    
+    Returns:
+        str: The ID of the found or created assistant.
+    """
 
         assistants = await self.list_assistants()
         if name in assistants:
@@ -345,7 +333,7 @@ class OAI_Agent():
             if existing_assistant.instructions != instructions or existing_assistant.tools != tools or existing_assistant.model != model:
                 # Update the assistant with new arguments
                 await self.update_assistant(assistant_id, name=name, description=existing_assistant.description, instructions=instructions, tools=tools)
-            self.assistant_id = assistant_id
+            
             return assistant_id
         else:
             # Create a new assistant if not found
@@ -355,7 +343,6 @@ class OAI_Agent():
                 tools=tools,
                 model=model
             )
-            self.assistant_id = assistant.id
             return assistant.id
 
 
@@ -388,7 +375,7 @@ class OAI_Agent():
 
         return await self.client.beta.assistants.update(assistant_id, **update_fields)
 
-    def count_tokens(self,text):
+    def count_tokens(text):
         """
         Counts the number of tokens in a given text string using gpt3_tokenizer.
 
@@ -416,17 +403,7 @@ class OAI_Agent():
         # Count the tokens in the user's message
         token_count = self.count_tokens(content)
         print(f"Tokens used in message: {token_count}")
-        try:
-            thread = await self.create_thread()
-
-            self.thread = thread.id
-
-        finally:
-            return await self.client.beta.threads.messages.create(thread_id=self.thread, role=role, content=content)
-
-
-
-        
+        return await self.client.beta.threads.messages.create(thread_id=thread_id, role=role, content=content)
 
 
     async def wait_for_assistant(self,thread_id, assistant_id):
@@ -440,11 +417,10 @@ class OAI_Agent():
         Returns:
             None
         """
-        runs = await self.client.beta.threads.runs.create(thread_id=thread_id, assistant_id=assistant_id)
         while True:
-            print(runs.completed_at)
-            complete = runs.completed_at
-            if complete is not None:
+            runs = await self.client.beta.threads.runs.list(thread_id)
+            latest_run = runs.data[0]
+            if latest_run.status in ["completed", "failed"]:
                 break
             await asyncio.sleep(2) # Wait for 2 seconds before checking again
 
@@ -479,31 +455,23 @@ class OAI_Agent():
             role = message.role
             message_text = message.content[0].text.value
             #Fix this silly mistake
-            print(f"This is the role and message {role}: {message_text}")
+            print(f"{role}: {message_text}")
 
             
     # Function to get the latest response and handle the run
     async def get_latest_response(self,thread_id, assistant_id, user_input):
+        # Send the user message
+        await self.send_message(thread_id, user_input)
 
-        self.thread = await self.get_or_create_thread()
-        thread_id = self.thread.id
-            # Send the user message
-        send_message = await self.send_message(thread_id, user_input)
-        print(f" this is the message send: {send_message}")
+        # Create a new run for the assistant to respond
+        await self.client.beta.threads.runs.create(thread_id=thread_id, assistant_id=assistant_id)
 
-            # Create a new run for the assistant to respond
-        run = await self.client.beta.threads.create_and_run(
-        assistant_id=assistant_id,
-        )
-        #await self.client.beta.threads.runs.create(thread_id=thread_id, assistant_id=assistant_id)
-
-            # Wait for the assistant's response
+        # Wait for the assistant's response
         await self.wait_for_assistant(thread_id, assistant_id)
 
-            # Retrieve the latest response
+        # Retrieve the latest response
         response = await self.client.beta.threads.messages.list(thread_id=thread_id)
         for message in response.data:
-            print(f"this is the message RESPONSE: {message}")
             if message.role == "assistant":
                 return message.content[0].text.value, self.count_tokens(message.content[0].text.value)
         return None, 0

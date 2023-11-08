@@ -1,25 +1,46 @@
 import asyncio
 from agent_class import OAI_Agent
 
-api_key='API KEY'
 
-organization_id='ORG'
+api_key="APIKEY"
+organization_id="ORGID"
 
 client = OAI_Agent(api_key=api_key, organization_id=organization_id)
 
 json_file = 'thread_data.json'
+agent_file = 'agent_data.json'
+
+thread_name = "My_First_Chat
+Customer_Service_Assistant = {
+    "name":"Customer Service Assistant",
+    "instructions":"You are a customer service assistant. Answer user queries courteously and accurately.",
+    "tools":[{"type": "retrieval"}],
+    "model":"gpt-4-1106-preview"
+}
+
+
+async def create_agent(Assistant_config):
+    name = Assistant_config["name"]
+    instructions = Assistant_config["instructions"]
+    tools = Assistant_config["tools"]
+    model = Assistant_config["model"]
+
+    assistant_id = await client.find_or_create_assistant(
+        send_name=name,
+        instructions=instructions,
+        tools=tools,
+        model=model
+    )
+
+    return assistant_id
 
 # Function to handle customer inquiries
 async def handle_customer_inquiries():
-    assistant_id = await client.find_or_create_assistant(
-        name="Customer Service Assistant",
-        instructions="You are a customer service assistant. Answer user queries courteously and accurately.",
-        tools=[{"type": "retrieval"}],
-        model="gpt-4-1106-preview"
-    )
+    
+    assistant_id= await create_agent(Customer_Service_Assistant)
 
     await client.update_assistant(assistant_id, description="Handles customer service inquiries efficiently.")
-    thread_id = await client.get_or_create_thread()
+    thread_id = await client.get_or_create_thread(thread_name)
 
     # Display existing chat history
     await client.display_chat_history(thread_id)

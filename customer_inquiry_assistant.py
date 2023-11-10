@@ -10,7 +10,7 @@ client = OAI_Agent(api_key=api_key, organization_id=organization_id)
 json_file = 'thread_data.json'
 agent_file = 'agent_data.json'
 
-thread_name = "My_First_Chat
+thread_name = "My_First_Chat"
 Customer_Service_Assistant = {
     "name":"Customer Service Assistant",
     "instructions":"You are a customer service assistant. Answer user queries courteously and accurately.",

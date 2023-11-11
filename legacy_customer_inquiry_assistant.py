@@ -1,5 +1,5 @@
 import asyncio
-from agent_class import OAI_Agent
+from agent_class_legacy import OAI_Agent
 
 
 api_key="APIKEY"

@@ -1,4 +1,4 @@
-# OpenAI Assistant Manager
+# OpenAI CMD Terminal Assistant Chat Manager
 
 ## Overview
 This repository contains two Python scripts for interacting with OpenAI's API:

@@ -1,47 +1,28 @@
-
-# OpenAI Enhanced Chat Assistant for Customer Inquiries
+# OpenAI Assistant Manager
 
 ## Overview
-Harness the power of OpenAI's cutting-edge Assistant API features, this script creates a dynamic, responsive, and intelligent chat experience that's both efficient and user-friendly.
-More expansion is commng so stay tuned to the repo! Star and watch for updates!
+This repository contains two Python scripts for interacting with OpenAI's API:
+- `assistant_manager.py`: Manages API interactions.
+- `example_cmd_chat.py`: Demonstrates a command-line interface using the manager.
+
+## Setup
+1. Clone the repository.
+2. Install dependencies: `requests` and `openai`.
+3. Set up your OpenAI credentials in the scripts.
+
+## Usage
+- `assistant_manager.py`: Initialize with OpenAI credentials and use its methods.
+- `example_cmd_chat.py`: Run to see a command-line interface in action.
+
+Start a chat. Select a Assistant from the avaliable assistants on your account. (Chat path to create assistants comming shortly)
+Select a thread (if you have previous ones saved locally via the script)
+Chat away!
 
 ### What is This Script?
 - **Real-Time Interaction**: Experience seamless, real-time conversations with an AI-powered assistant that responds promptly to your queries.
 - **Persistent Thread Management**: The script intelligently manages and saves conversation threads, ensuring no inquiry gets lost and every conversation flows smoothly from where it left off.
 - **Customizable Assistants**: Tailor your chat assistant to fit specific roles or requirements, making it versatile for a wide array of customer service scenarios.
-
-### What is comming wth ths script?
-- **Dedicated flask based webserver**: select and change settings and Agents via an interface.
-- **Multi-Thread Capability**: Juggle multiple conversation threads effortlessly, providing users the flexibility to handle various inquiries simultaneously.
-
-
-## Getting Started
-
-### Prerequisites
-- **Python 3.7+**: Ensure you have Python 3.7 or newer.
-- **OpenAI API Key**: Obtain your OpenAI API key for access to the AI's capabilities.
-- **Organization ID (Optional)**: This may be needed depending on your OpenAI account setup.
-
-### Installation
-1. Clone or download this repository to your local machine.
-2. Navigate to the script directory:
-   ```bash
-   cd path/to/script
-   ```
-3. Install the OpenAI package:
-   ```bash
-   pip install openai
-   ```
-
-### Initial Setup
-1. Insert your OpenAI API key and organization ID (if applicable) into the script.
-2. Customize the assistant configurations as desired.
-
-### Running the Assistant
-1. Launch the script:
-   ```bash
-   python customer_inquiry_assistant.py
-   ```
-2. Begin interacting with the assistant, and watch as it handles inquiries with ease.
+- **Hot-Swap Agents**: Swap out agents mid - thread by writing 'swapA'
+- **Change Threads**: Change threads/Start a new one by writing 'new'
 
 ### Share any uses!

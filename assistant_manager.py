@@ -200,21 +200,26 @@ class OAI_Assistant():
             return thread_id
         elif thread_id is not None:
             #if the thread ID is not None, get the thread name from the thread_ids.json file
-            #print(f"Trying to change thread to ID {thread_id}")
-            thread_name = self.get_threads()[thread_id]
-            #print(f"Thread name: {thread_name}")
-            if thread_id in self.threads:
+            print(f"Trying to change thread to ID {thread_id}")
+            threads = self.get_threads()
+            #Object with key as thread name and value as thread ID
+            thread_name = None
+            for key, value in threads.items():
+                 if value == thread_id:
+                    thread_name = key
+                    break
+
+            if thread_name is not None:
                 #if we have seen this thread before, get the thread history
                 self.prepare_thread_history(thread_id)
                 self.current_thread = thread_id
-                #print(f"Thread {thread_name} found. Changing thread...")
-                self.logger.debug(f"Changed thread to {thread_id}")
-                return True
+                self.logger.debug(f"Thread {thread_name} found. Changing thread...")
+                return thread_id
         else:
              #if both none, create a blank thread
             thread_id = self.create_blank_thread()
-            #print("Creating Blank Thread...")
-            return True
+            print("Creating Blank Thread...")
+            return thread_id
             
 
     def get_threads(self):

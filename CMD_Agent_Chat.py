@@ -80,10 +80,10 @@ def setup_thread(the_assistant: OAI_Assistant, input_thread_name=None, input_thr
         thread_id = the_assistant.change_thread(input_thread_name)
     elif input_thread_id is not None:
         #change the thread to the thread with the given ID
-        thread_id = the_assistant.change_thread(input_thread_id=input_thread_id)
+        thread_id = the_assistant.change_thread(thread_id=input_thread_id)
     else:
         #create a thread with the deafult name
-        thread_id = the_assistant.change_thread(input_thread_name="Default_Thread")
+        thread_id = the_assistant.change_thread(thread_name="Default_Thread")
 
 
     the_assistant.current_thread = thread_id
@@ -194,6 +194,3 @@ if history is not None:
 message_user("------------")
 message_user("Your Chat has begun")
 main_run(assistant, assistant_id,thread_id)
-
-
-    

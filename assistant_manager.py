@@ -1,7 +1,8 @@
 
+from typing import List, Optional
 import requests
 from openai import OpenAI
-from openai._types import NotGiven
+from openai._types import NotGiven, NOT_GIVEN
 from openai.types.beta.threads import ThreadMessage
 import logging
 import json
@@ -28,11 +29,12 @@ class OAI_Assistant():
         self.logger.debug(f"Initailized AssistantManager. self.client: {self.client}")
         
         #Set up some defaults to keep track of the current assistant, thread and run
-        self.current_assistant = None
+        self.current_assistant = None or OAI_Assistant
         self.assistants = self.list_assistants(limit=30)
         self.current_thread = None
         self.current_thread_history = None
         self.current_run = None
+        self.assistant_id = None
 
         #set up some things to handle the assistant files
         self.assistant_files = {}
@@ -262,36 +264,82 @@ class OAI_Assistant():
         # Write the updated data back to the file
         self.save_json('thread_ids.json', data)
 
-
-    def list_assistant_cache(self):
+    def save_tool_metadata(self, tool_name, tool_required, tool_description, tool_schema):
         """
-        Returns a list of assistants cached in the assistant manager.
+         Save the metadata into functions_metadata.json file
+
+            Args:
+                tool_name (str): The name of the tool.
+                tool_required (list): The list of required parameters for the tool.
+                tool_description (str): The description of the tool.
+                tool_schema (dict): The schema of the tool.
+
+            Returns:
+                None
+        """
+        # Read the existing data from the file
+        data = self.read_json('functions_metadata.json')
+
+        # Add the new entry to the data
+        data[tool_name] = {
+            "required": tool_required,
+            "description": tool_description,
+            "schema": tool_schema
+        }
+
+        # Write the updated data back to the file
+        self.save_json('functions_metadata.json', data)
+
+
+    def make_tool_metadata(self, tool_name, tool_required, tool_description, tool_schema):
+        """
+        Registers metadata for a tool.
 
         Args:
-            None
+            tool_name (str): The name of the tool.
+            tool_id (str): The ID of the tool.
+            tool_description (str): The description of the tool.
+            tool_schema (dict): The schema of the tool.
 
         Returns:
-            list: A list of assistant objects.
+            None
         """
-        return self.assistants
+        # Define the metadata for the tool
+        metadata = {
+            "type": "function",
+            "function": {
+                "name": tool_name,
+                "description": tool_description,
+                "parameters": {
+                    "type": "object",
+                    "properties": tool_schema,
+                    "required": tool_required
+                }
+            }
+        }
+        # Return the metadata
+        return metadata
 
+        
     # Lets enable tool use for the assistant
-    def enable_tool(self, tool_name):
+    def enable_tools(self, assistant_id, tools_list):
         """
-        Enables a tool for the assistant.
+        Enables tools for the current assistant.
 
         Args:
-            tool_name: The name of the tool to enable. Can be `code_interpreter`, `retrieval`, or
-                `function`.
+            tools_list (list): A list of tools to enable.
+
+        Returns:
+            Assistant id or None
         """
-        if self.current_assistant is None:
-            raise Exception("No assistant selected. Please select an assistant first.")
-        
-        if tool_name not in self.current_assistant.tools:
-            self.current_assistant.tools.append(tool_name)
-            self.logger.debug(f"Enabled {tool_name} for assistant {self.current_assistant.id}")
-        else:
-            self.logger.debug(f"{tool_name} already enabled for assistant {self.current_assistant.id}")
+        #enable the tools
+        assistant = self.modify_assistant(assistant_id=assistant_id, tools=tools_list, )
+        #save the assistant to the current assistant
+        self.current_assistant = assistant
+        self.assistant_id = assistant.id
+        #return the assistant
+        return assistant.id
+    
 
 
 
@@ -332,33 +380,50 @@ class OAI_Assistant():
             metadata=metadata
         )
 
-    def modify_assistant(self, assistant_id, model=None, name=None, description=None, instructions=None, tools=None, file_ids=None, metadata=None):
+
+    def modify_assistant(
+        self,
+        assistant_id: str,
+        *,
+        description: Optional[str] | NotGiven = NOT_GIVEN,
+        file_ids: List[str] | NotGiven = NOT_GIVEN,
+        instructions: Optional[str] | NotGiven = NOT_GIVEN,
+        metadata: Optional[object] | NotGiven = NOT_GIVEN,
+        model: str | NotGiven = NOT_GIVEN,
+        name: Optional[str] | NotGiven = NOT_GIVEN,
+        tools: List[object] | NotGiven = NOT_GIVEN,
+    ):
         """
         Modifies an assistant.
 
         Args:
             assistant_id: The ID of the assistant to modify.
-            model: ID of the model to use. You can use the
-                [List models](https://beta.openai.com/docs/api-reference/models/list) API to
-                see all of your available models, or see our
-                [Model overview](https://beta.openai.com/docs/models/overview) for
-                descriptions of them.
-            name: The name of the assistant. The maximum length is 256 characters.
             description: The description of the assistant. The maximum length is 512 characters.
-            instructions: The system instructions that the assistant uses. The maximum length is 32768
-                characters.
-            tools: A list of tool enabled on the assistant. There can be a maximum of 128 tools per
-                assistant. Tools can be of types `code_interpreter`, `retrieval`, or `function`.
-            file_ids: A list of [File](https://beta.openai.com/docs/api-reference/files) IDs
+            file_ids: A list of [File](https://platform.openai.com/docs/api-reference/files) IDs
                 attached to this assistant. There can be a maximum of 20 files attached to the
                 assistant. Files are ordered by their creation date in ascending order. If a
-                file was previously attached to the list but does not show up in the list, it
+                file was previosuly attached to the list but does not show up in the list, it
                 will be deleted from the assistant.
+            instructions: The system instructions that the assistant uses. The maximum length is 32768
+                characters.
             metadata: Set of 16 key-value pairs that can be attached to an object. This can be useful
                 for storing additional information about the object in a structured format. Keys
-                can be a maximum of 64 characters long and values can be a maximum of 512
+                can be a maximum of 64 characters long and values can be a maxium of 512
                 characters long.
+            model: ID of the model to use. You can use the
+                [List models](https://platform.openai.com/docs/api-reference/models/list) API to
+                see all of your available models, or see our
+                [Model overview](https://platform.openai.com/docs/models/overview) for
+                descriptions of them.
+            name: The name of the assistant. The maximum length is 256 characters.
+            tools: A list of tool enabled on the assistant. There can be a maximum of 128 tools per
+                assistant. Tools can be of types `code_interpreter`, `retrieval`, or `function`.
+            extra_headers: Send extra headers
+            extra_query: Add additional query parameters to the request
+            extra_body: Add additional JSON properties to the request
+            timeout: Override the client-level default timeout for this request, in seconds
         """
+       
         return self.client.assistants.update(
             assistant_id=assistant_id,
             model=model,
@@ -633,14 +698,18 @@ class OAI_Assistant():
                 extra_body: Add additional JSON properties to the request
                 timeout: Override the client-level default timeout for this request, in seconds
             """
-            return self.client.threads.messages.retrieve(
-                    thread_id=thread_id,
-                    message_id=message_id,
-                    extra_headers=extra_headers,
-                    extra_query=extra_query,
-                    extra_body=extra_body,
-                    timeout=timeout
-            )
+            try:
+                return self.client.threads.messages.retrieve(
+                        thread_id=thread_id,
+                        message_id=message_id,
+                        extra_headers=extra_headers,
+                        extra_query=extra_query,
+                        extra_body=extra_body,
+                        timeout=timeout
+                )
+            except Exception as e:
+                print(f"Error retrieving message: {e}")
+                return None
 
     def modify_message(self, thread_id, message_id, metadata=None, extra_headers=None, extra_query=None, extra_body=None, timeout=None):
         """

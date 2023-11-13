@@ -1,6 +1,6 @@
 # OpenAI CMD Terminal Assistant Chat Manager
 
-# update 13th nov 2023 - Function Calling has been added!
+# update 13th nov 2023 - Function Calling has been added! Assistants CAN write and call custom functions
 
 ## Overview
 This repository contains two Python scripts for interacting with OpenAI's API:

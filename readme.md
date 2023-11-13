@@ -30,6 +30,6 @@ Chat away!
 - **Hot-Swap Agents**: Swap out agents mid - thread by writing 'swapA'
 - **Change Threads**: Change threads/Start a new one by writing 'new'
 - **Function Calling**: You can use 'tool' to open a numbered menu of avaliable function calls that can be assigned dynamically to the assistant.
-- **D-I-Y FUNCTIONS**: Assistants CAN write their own functions with smart prompting and static tool use. I will incorporate a tooler_assistant that is conditioned to provide the correct tools for re-tooling assistants
+- **D-I-Y FUNCTIONS**: Assistants CAN write their own functions with smart prompting and static tool use. I will incorporate a tooler_assistant that is conditioned to provide the correct tools for re-tooling assistants. As a tldr: You assistant needs read_file and write_to_file and to be told about dyanmic_functions.py and function_metadata.json and how the function metatdata handling works (specifically that it should always read the files before writing to them and always include the whole file in the rewrite)
 
 ### Share any uses!

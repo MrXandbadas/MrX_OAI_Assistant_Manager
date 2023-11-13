@@ -1,0 +1,69 @@
+{
+    "get_stock_Price": {
+        "tool_name": "get_stock_price",
+        "tool_required": "symbol",
+        "tool_description": "Get the current stock price of a company",
+        "tool_properties": {
+            "symbol": {
+                "type": "string",
+                "description": "The stock ticker symbol"
+            }
+        }
+    },
+    "get_arxiv_papers": {
+        "tool_name": "get_arxiv_papers",
+        "tool_required": "query",
+        "tool_description": "Retrieve academic papers from arXiv based on a search query",
+        "tool_properties": {
+            "query": {
+                "type": "string",
+                "description": "Search query or key phrases to find papers related to"
+            },
+            "max_results": {
+                "type": "integer",
+                "description": "Maximum number of results to return",
+                "default": 5
+            },
+            "sort_by": {
+                "type": "string",
+                "description": "Parameter to determine sorting of results",
+                "default": "relevance"
+            },
+            "sort_order": {
+                "type": "string",
+                "description": "Order of sorting (ascending or descending)",
+                "default": "descending"
+            }
+        }
+    },
+    "get_weather_forecast": {
+        "tool_name": "get_weather_forecast",
+        "tool_required": "latitude, longitude",
+        "tool_description": "Retrieve weather information using latitude and longitude",
+        "tool_properties": {
+            "latitude": {
+                "type": "integer",
+                "description": "The latitude coordinate for the location."
+            },
+            "longitude": {
+                "type": "integer",
+                "description": "The longitude coordinate for the location."
+            },
+            "current_weather": {
+                "type": "boolean",
+                "description": "A boolean indicating if current weather data should be fetched.",
+                "default": true
+            },
+            "hourly_forecast": {
+                "type": "boolean",
+                "description": "A boolean indicating if hourly forecast data should be fetched.",
+                "default": false
+            },
+            "daily_forecast": {
+                "type": "boolean",
+                "description": "A boolean indicating if daily forecast data should be fetched.",
+                "default": false
+            }
+        }
+    }
+}

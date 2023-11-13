@@ -1,0 +1,50 @@
+{
+    "write_to_File": {
+        "tool_name": "write_to_file",
+        "tool_required": "file_name",
+        "tool_description": "Write the output to a file",
+        "tool_properties": {
+            "file_name": {
+                "type": "string",
+                "description": "The name of the file"
+            },
+            "content": {
+                "type": "string",
+                "description": "The content to write to the file"
+            }
+        }
+    },
+    "read_File": {
+        "tool_name": "read_file",
+        "tool_required": "file_name",
+        "tool_description": "Read the content of a file",
+        "tool_properties": {
+            "file_name": {
+                "type": "string",
+                "description": "The name of the file"
+            }
+        }
+    },
+    "exec_python": {
+        "tool_name": "exec_python",
+        "tool_required": "cell",
+        "tool_description": "run cell in ipython and return the execution result.",
+        "tool_properties": {
+            "cell": {
+                "type": "string",
+                "description": "Valid Python cell to execute."
+            }
+        }
+    },
+    "exec_sh": {
+        "tool_name": "exec_sh",
+        "tool_required": "script",
+        "tool_description": "run a shell script and return the execution result.",
+        "tool_properties": {
+            "script": {
+                "type": "string",
+                "description": "Valid shell script to execute."
+            }
+        }
+    }
+}

@@ -40,6 +40,7 @@ class OAI_Assistant():
         self.assistant_files = {}
         self.assistant_file_ids = {}
         self.assistant_file_names = {}
+        self.tool_metadata = {}
 
         #set up some things to handle list of threads. We will store the thread id and give the thread a name that the user can set and see
         self.threads = None
@@ -264,6 +265,27 @@ class OAI_Assistant():
         # Write the updated data back to the file
         self.save_json('thread_ids.json', data)
 
+
+    def load_tool_metadata(self):
+        """
+        Loads the metadata from functions_metadata.json file
+
+        Args:
+            None
+
+        Returns:
+            dict: A dict of tool metadata.
+        """
+        #attempt to read the functions_metadata.json file
+        tool_metadata = self.read_json('functions_metadata.json')
+        #if the file is empty, return an empty dict
+        if tool_metadata is None:
+            return {}
+        else:
+            #if the file is not empty, return the dict
+            self.tool_metadata = tool_metadata
+            return self.tool_metadata
+
     def save_tool_metadata(self, tool_name, tool_required, tool_description, tool_schema):
         """
          Save the metadata into functions_metadata.json file
@@ -289,15 +311,16 @@ class OAI_Assistant():
 
         # Write the updated data back to the file
         self.save_json('functions_metadata.json', data)
+        #save to self
+        self.tool_metadata = data
 
-
-    def make_tool_metadata(self, tool_name, tool_required, tool_description, tool_schema):
+    def make_tool_metadata(self, tool_name, tool_required, tool_description, tool_properties):
         """
         Registers metadata for a tool.
 
         Args:
             tool_name (str): The name of the tool.
-            tool_id (str): The ID of the tool.
+            tool_required (str): The ID of the tool.
             tool_description (str): The description of the tool.
             tool_schema (dict): The schema of the tool.
 
@@ -306,16 +329,13 @@ class OAI_Assistant():
         """
         # Define the metadata for the tool
         metadata = {
-            "type": "function",
-            "function": {
                 "name": tool_name,
                 "description": tool_description,
                 "parameters": {
                     "type": "object",
-                    "properties": tool_schema,
-                    "required": tool_required
+                    "properties": tool_properties,
+                    "required": [tool_required]
                 }
-            }
         }
         # Return the metadata
         return metadata
@@ -333,12 +353,14 @@ class OAI_Assistant():
             Assistant id or None
         """
         #enable the tools
+
+        print(json.dumps(tools_list, indent=4))
         assistant = self.modify_assistant(assistant_id=assistant_id, tools=tools_list, )
         #save the assistant to the current assistant
         self.current_assistant = assistant
         self.assistant_id = assistant.id
         #return the assistant
-        return assistant.id
+        return assistant
     
 
 

@@ -1,12 +1,17 @@
 from assistant_manager import OAI_Assistant
 import time
+import json
+import dynamic_functions
+from utils.file_operations import read_file, write_to_file, exec_python, exec_sh
+from utils.special_functions import get_stock_price
+
+
+
+#import env variables
 import os
 
-# Untested, i usually put mine in manually even tho its bad practice.
 org_id = os.environ.get('ORG_ID')
 api_key = os.environ.get('API_KEY')
-
-#End Untested
 
 
 #### General Helper Functions ####
@@ -34,6 +39,30 @@ def get_multiple_choice_input(options):
         except ValueError:
             print('Please enter a valid option')
 
+def get_multiple_choice_multiple_input(options:dict):
+    print('Please input Numbers only to select any of the following options or enter Q to leave:')
+    for i, option in enumerate(options):
+        print(f'{i+1}. {option}')
+    while True:
+        try:
+            choice = input('>>> ')
+            if choice.lower() in ["q", "quit", "exit"]:
+                return None
+            if "," in choice:
+                choices = [int(i) - 1 for i in choice.split(",")]
+                if any(choice >= len(options) or choice < 0 for choice in choices):
+                    raise ValueError
+                return [options[list(options.keys())[choice]] for choice in choices]
+            else:
+                choice = int(choice) - 1
+                if choice >= len(options) or choice < 0:
+                    raise ValueError
+                return [options[list(options.keys())[choice]]] # Modified line
+        except ValueError:
+            print('Please enter a valid option')
+
+
+
 #### End of General Helper Functions ####
 
 
@@ -50,9 +79,10 @@ def setup_assistant_chat(the_assistant: OAI_Assistant):
         str: The ID of the selected assistant.
     """
     # Lets start by getting the list of assistants
-    assistants = the_assistant.list_assistant_cache()
+    assistants = the_assistant.assistants
     # Print list in a readable format it is a SyncCursorPage
     message_user('List of assistants:')
+    message_user(f"{assistants}")
     local_assistants = []
     for i, assistant in enumerate(assistants.data):
         local_assistants.append(assistant.name)
@@ -68,7 +98,9 @@ def setup_assistant_chat(the_assistant: OAI_Assistant):
     if assistant is None:
         message_user(f"No assistant found with name {selected}")
         return
+    
     assistant_id = assistant.id
+    the_assistant.assistant_id = assistant_id
     message_user(f"Assistant ID: {assistant_id}")
 
     return assistant_id
@@ -93,7 +125,7 @@ def setup_thread(the_assistant: OAI_Assistant, input_thread_name=None, input_thr
 
 def swap_Thread(assistant: OAI_Assistant):
     #Ask the user for the thread name or ID
-    options = ["Name", "ID"]
+    options = ["Name", "ID", "Multiple Choice (Save Locally)"]
     selected = get_multiple_choice_input(options)
     # If the user selected name, ask for the name
     if selected == "Name":
@@ -107,10 +139,42 @@ def swap_Thread(assistant: OAI_Assistant):
         thread_id = get_input()
         thread_id = setup_thread(assistant, input_thread_id=thread_id)
         return thread_id
+    # If the user selected Multiple Choice, Provide a list of threads and ask the user to select one
+    elif selected == "Multiple Choice (Save Locally)":
+        #load the threads in teh json file
+        with open('thread_ids.json') as json_file:
+            data = json.load(json_file)
+            local_threads = []
+            for thread_name, thread_id in data.items():
+                local_threads.append(thread_name)
+
+            selected = get_multiple_choice_input(local_threads)
+            thread_id = data.get(selected)
+            if thread_id is None:
+                message_user(f"No thread found with name {selected}")
+                return
+
+            thread_id = setup_thread(assistant, input_thread_id=thread_id)
+
+            #check for messages in the thread
+            history = assistant.list_thread_history()
+            #message_user(f"History: {history}")
+            if history is not None:
+                for message in reversed(history):
+                    message_user("------------")
+                    data = assistant.retrieve_message(thread_id=thread_id, message_id=message)
+                    #data.content[0].text.value
+                    message_user(f"{data.role}: {data.content[0].text.value}")
+            return thread_id
 
 #### End of chat working functions ####
 
+
+
+
 def main_run(assistant: OAI_Assistant, assistant_id,thread_id):
+
+    
 
     while True:
         # Get the input from the user
@@ -118,7 +182,7 @@ def main_run(assistant: OAI_Assistant, assistant_id,thread_id):
 
         message_user("------------")
         message_user("Your chat controls are as follows:")
-        message_user("To quit the chat enter 'Q'/'q' | To start a new thread enter 'new' | To swap assistants enter 'swapA'")
+        message_user("To quit the chat enter 'Q'/'q' | To start a new thread enter 'swapT' | To swap assistants enter 'swapA'")
         message_user("Please enter your message or a chat control.")
         message = get_input()
         #Check the users response for logic commands
@@ -127,6 +191,59 @@ def main_run(assistant: OAI_Assistant, assistant_id,thread_id):
 
         if message == "Q" or message == "q":
             break
+        elif message == "tool":
+            message_user("Enabling tools")
+            #Grab the tools from the assistant function metadata
+            tools = assistant.load_tool_metadata()
+            choices = get_multiple_choice_multiple_input(tools)
+            print(choices)
+            #Collect the information about the selection. int has been returned which we need to use to grab the correct dict item
+            tools_list = []
+            correct_info = [{
+                "type": "function",
+                "function": {}
+            }]
+            
+            #metadata = {}
+            #tools is a dict and choices is a int, we need to grab the correct item via the int
+            #grab the item from the dict in a way that uses the int. We need to convert the dict to a list first
+            for choice in choices:
+                #grab the correct info from the list
+                tool_name = choice["tool_name"]
+                tool_required = choice["tool_required"]
+                tool_description = choice["tool_description"]
+                tool_properties = choice["tool_properties"]
+                tool_metadata = assistant.make_tool_metadata(tool_name=tool_name, tool_required=tool_required, tool_description=tool_description, tool_properties=tool_properties)
+                # add the tool to the metadata dict
+                correct_info = {
+                "type": "function",
+                "function": tool_metadata
+                }
+                #add the tool to the tools list
+                tools_list.append(correct_info)
+                
+                #tools_list.append(assistant.make_tool_metadata(tool_name=choice["tool_name"], tool_required=choice["tool_required"], tool_description=choice["tool_description"], tool_properties=choice["tool_properties"]))
+                
+
+            
+            
+            #Check if the user wants to enable the tools
+            #message_user(f"Tools Selected: {tools_list}")
+            # grab the tools from the assistant
+            
+            message_user("Are you sure you want to enable these tools? (Y/N)")
+            choice = get_multiple_choice_input(["Y", "N"])
+
+            if choice == "Y":
+                #enable the tools
+                
+                assistant_new = assistant.enable_tools(assistant_id, tools_list)
+                assistant.assistant_id = assistant_new.id
+
+            else:
+                message_user("Tools not enabled")
+            
+            continue
         elif message == "swapT":
             thread_swapped = swap_Thread(assistant)
 
@@ -155,8 +272,46 @@ def main_run(assistant: OAI_Assistant, assistant_id,thread_id):
                         message_user(f'assistant: {message.content[0].text.value}')
                         assistant.chat_ids.append(message.id)
                 break
+            elif run.status == "requires_action":
+                message_user("The run requires action.")
+                required_actions_json = run.required_action.submit_tool_outputs.model_dump_json(indent=4)
+                message_user(f"Required Actions: {required_actions_json}")
+                required_actions = json.loads(required_actions_json)
+                tools_output = []
+                for action in required_actions["tool_calls"]:
+                    if action["function"]["name"] == "get_stock_price":
+                        arguments = json.loads(action["function"]["arguments"])
+                        stock_price = get_stock_price(arguments["symbol"])
+                        tools_output.append({"tool_call_id": action["id"], "output": stock_price})
+                    #else if check if its in the dynamic tool code
+                    elif action["function"]["name"] == "write_to_file":
+                        arguments = json.loads(action["function"]["arguments"])
+                        write_to_file(arguments["file_name"], arguments["content"])
+                        tools_output.append({"tool_call_id": action["id"], "output": "Success"})
+                    elif action["function"]["name"] == "read_file":
+                        arguments = json.loads(action["function"]["arguments"])
+                        file_content = read_file(arguments["file_name"])
+                        tools_output.append({"tool_call_id": action["id"], "output": file_content})
+                    elif action["function"]["name"] == "exec_python":
+                        arguments = json.loads(action["function"]["arguments"])
+                        function_output = exec_python(arguments["cell"])
+                        tools_output.append({"tool_call_id": action["id"], "output": function_output})
+                    #elif the action is dynamic_{function} then we need to call the function
+                    elif action["function"]["name"] in dir(dynamic_functions):
+                        
+                        arguments = json.loads(action["function"]["arguments"])
+                        function_name = action["function"]["name"]
+                        function = getattr(dynamic_functions, function_name)
+                        function_output = function(**arguments)
+                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
+                    else:
+                        message_user(f"Function {action['function']['name']} not found")
+                #message_user(f"Tools Output: {tools_output}")
+                assistant.submit_tool_outputs(thread_id, run.id, tools_output)
+
             elif run.status == "failed":
                 message_user("The run failed.")
+                message_user(f"Error: {json.dumps(run, indent=4)}")
                 break
             else:
                 time.sleep(1)

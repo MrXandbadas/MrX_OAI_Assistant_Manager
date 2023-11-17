@@ -6,6 +6,9 @@ from openai._types import NotGiven, NOT_GIVEN
 from openai.types.beta.threads import ThreadMessage
 import logging
 import json
+import dynamic_functions
+from utils.file_operations import read_file, write_file, exec_python, exec_sh
+from utils.special_functions import get_stock_price, generate_image, create_image_variation, edit_image
 
 class OAI_Assistant():
     def __init__(self, api_key, organization, timeout=None, log_level=logging.INFO):

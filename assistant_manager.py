@@ -984,3 +984,74 @@ class OAI_Assistant():
         self.logger.debug(f"Submitted tool outputs for run {run_id}")
 
         return run
+
+    def process_run(self,thread_id, run_id):
+        run = self.retrieve_run(thread_id, run.id)
+        while run.status != "completed":
+            if run.status == "completed":
+                message_list = self.list_messages(thread_id)
+                for message in message_list.data:
+                    if message.id in self.chat_ids:
+                        continue
+                    else:
+                        print(f'assistant: {message.content[0].text.value}')
+                        self.chat_ids.append(message.id)
+                break
+            elif run.status == "requires_action":
+                print("The run requires action.")
+                required_actions_json = run.required_action.submit_tool_outputs.model_dump_json(indent=4)
+                print(f"Required Actions: {required_actions_json}")
+                required_actions = json.loads(required_actions_json)
+                tools_output = []
+                for action in required_actions["tool_calls"]:
+                    if action["function"]["name"] == "get_stock_price":
+                        arguments = json.loads(action["function"]["arguments"])
+                        stock_price = get_stock_price(arguments["symbol"])
+                        tools_output.append({"tool_call_id": action["id"], "output": stock_price})
+                    #else if check if its in the dynamic tool code
+                    elif action["function"]["name"] == "write_file":
+                        arguments = json.loads(action["function"]["arguments"])
+                        write_file(arguments["file_name"], arguments["content"])
+                        tools_output.append({"tool_call_id": action["id"], "output": "Success"})
+                    elif action["function"]["name"] == "read_file":
+                        arguments = json.loads(action["function"]["arguments"])
+                        file_content = read_file(arguments["file_name"])
+                        tools_output.append({"tool_call_id": action["id"], "output": file_content})
+                    elif action["function"]["name"] == "exec_python":
+                        arguments = json.loads(action["function"]["arguments"])
+                        function_output = exec_python(arguments["cell"])
+                        tools_output.append({"tool_call_id": action["id"], "output": function_output})
+                    #elif the action is dynamic_{function} then we need to call the function
+                    elif action["function"]["name"] == "generate_image":
+                        arguments = json.loads(action["function"]["arguments"])
+                        function_output = generate_image(self, **arguments)
+                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
+                    elif action["function"]["name"] == "create_image_variation":
+                        arguments = json.loads(action["function"]["arguments"])
+                        function_output = create_image_variation(self, **arguments)
+                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
+                    elif action["function"]["name"] == "edit_image":
+                        arguments = json.loads(action["function"]["arguments"])
+                        function_output = edit_image(self, **arguments)
+                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
+                    elif action["function"]["name"] in dir(dynamic_functions):
+                        
+                        arguments = json.loads(action["function"]["arguments"])
+                        function_name = action["function"]["name"]
+                        function = getattr(dynamic_functions, function_name)
+                        function_output = function(**arguments)
+                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
+                    else:
+                        print(f"Function {action['function']['name']} not found")
+                #message_user(f"Tools Output: {tools_output}")
+                self.submit_tool_outputs(thread_id, run.id, tools_output)
+
+            elif run.status == "failed":
+                print("The run failed.")
+                print(f"Error: {json.dumps(run, indent=4)}")
+                break
+            else:
+                time.sleep(1)
+                continue
+        
+        return run.status

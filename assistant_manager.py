@@ -280,7 +280,16 @@ class OAI_Assistant():
             dict: A dict of tool metadata.
         """
         #attempt to read the functions_metadata.json file
-        tool_metadata = self.read_json('functions_metadata.json')
+        tool_metadata_dict0 = self.read_json('default_functions_metadata.json')
+        #print(tool_metadata_dict0)
+        #print("------")
+        tool_metadata_dict1 = self.read_json('functions_metadata.json')
+        #print(tool_metadata_dict1)
+        # Merge the two dicts into a new dict
+        tool_metadata = {**tool_metadata_dict0, **tool_metadata_dict1}
+        
+
+
         #if the file is empty, return an empty dict
         if tool_metadata is None:
             return {}

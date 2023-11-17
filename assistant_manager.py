@@ -998,8 +998,9 @@ class OAI_Assistant():
         return run
 
     def process_run(self,thread_id, run_id):
-        run = self.retrieve_run(thread_id, run_id)
-        while run.status != "completed":
+        while True:
+            run = self.retrieve_run(thread_id, run_id)
+            print(run.status)
             if run.status == "completed":
                 message_list = self.list_messages(thread_id)
                 for message in message_list.data:
@@ -1008,6 +1009,7 @@ class OAI_Assistant():
                     else:
                         print(f'assistant: {message.content[0].text.value}')
                         self.chat_ids.append(message.id)
+                        return message.content[0].text.value
                 break
             elif run.status == "requires_action":
                 print("The run requires action.")
@@ -1061,9 +1063,7 @@ class OAI_Assistant():
             elif run.status == "failed":
                 print("The run failed.")
                 print(f"Error: {json.dumps(run, indent=4)}")
-                break
+                return None
             else:
-                time.sleep(1)
+                time.sleep(2)
                 continue
-        
-        return run.status

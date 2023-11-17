@@ -46,5 +46,136 @@
                 "description": "Valid shell script to execute."
             }
         }
+    },
+    "get_weather_forecast": {
+        "tool_name": "get_weather_forecast",
+        "tool_required": "latitude, longitude",
+        "tool_description": "Retrieve weather information using latitude and longitude",
+        "tool_properties": {
+            "latitude": {
+                "type": "integer",
+                "description": "The latitude coordinate for the location."
+            },
+            "longitude": {
+                "type": "integer",
+                "description": "The longitude coordinate for the location."
+            },
+            "current_weather": {
+                "type": "boolean",
+                "description": "A boolean indicating if current weather data should be fetched.",
+                "default": true
+            },
+            "hourly_forecast": {
+                "type": "boolean",
+                "description": "A boolean indicating if hourly forecast data should be fetched.",
+                "default": false
+            },
+            "daily_forecast": {
+                "type": "boolean",
+                "description": "A boolean indicating if daily forecast data should be fetched.",
+                "default": false
+            }
+        }
+    },
+    "generate_image": {
+        "tool_name": "generate_image",
+        "tool_required": "prompt",
+        "tool_description": "Generates an image given a prompt using the OpenAI image generation API.",
+        "tool_properties": {
+            "prompt": {
+                "type": "string",
+                "description": "Text description for the desired image."
+            },
+            "model": {
+                "type": "string",
+                "description": "The model to use for image generation.",
+                "default": "dall-e-2"
+            },
+            "n": {
+                "type": "integer",
+                "description": "The number of images to generate.",
+                "default": 1
+            },
+            "size": {
+                "type": "string",
+                "description": "The size of the generated images ('256x256', '512x512', '1024x1024').",
+                "default": "1024x1024"
+            },
+            "quality": {
+                "type": "string",
+                "description": "The quality of the generated image ('standard', 'hd').",
+                "default": "standard"
+            },
+            "style": {
+                "type": "string",
+                "description": "The style of the generated images ('vivid', 'natural').",
+                "default": "vivid"
+            },
+            "response_format":{
+                "type": "string",
+                "description": "The format of the response ('url', 'b64_json').",
+                "default": "url"
+            }
+        }
+    },
+    "edit_image": {
+        "tool_name": "edit_image",
+        "tool_required": "image, prompt",
+        "tool_description": "Edits or extends an image given an original image and a prompt.",
+        "tool_properties": {
+            "image": {
+                "type": "string",
+                "description": "A valid URL or base64-encoded data of the PNG image to be edited."
+            },
+            "prompt": {
+                "type": "string",
+                "description": "Text description for the edit to be applied to the image."
+            },
+            "mask": {
+                "type": "string",
+                "description": "An optional mask image used to indicate areas of the image to be edited."
+            },
+            "model": {
+                "type": "string",
+                "description": "The model to use for editing the image.",
+                "default": "dall-e-2"
+            },
+            "n": {
+                "type": "integer",
+                "description": "The number of edited images to generate.",
+                "default": 1
+            },
+            "size": {
+                "type": "string",
+                "description": "The size of the edited images ('256x256', '512x512', '1024x1024').",
+                "default": "1024x1024"
+            }
+        }
+    },
+    "create_image_variation": {
+        "tool_name": "create_image_variation",
+        "tool_required": "image",
+        "tool_description": "Creates a variation of a given image.",
+        "tool_properties": {
+            "image": {
+                "type": "string",
+                "description": "A valid URL or base64-encoded data of the PNG image to use as the basis for variations."
+            },
+            "model": {
+                "type": "string",
+                "description": "The model to use for generating image variations.",
+                "default": "dall-e-2"
+            },
+            "n": {
+                "type": "integer",
+                "description": "The number of variations to generate.",
+                "default": 1
+            },
+            "size": {
+                "type": "string",
+                "description": "The size of the image variations ('256x256', '512x512', '1024x1024').",
+                "default": "1024x1024"
+            }
+        }
     }
 }

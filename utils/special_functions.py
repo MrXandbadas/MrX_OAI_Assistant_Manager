@@ -14,11 +14,11 @@ def get_stock_price(stock):
     return price
 
 
-def generate_image(assistant: OAI_Assistant, prompt, model='dall-e-2', n=1, size='1024x1024', quality='standard', style='vivid', response_format='url' or 'b64_json'):
+def generate_image(assistant, prompt, model='dall-e-2', n=1, size='1024x1024', quality='standard', style='vivid', response_format='url' or 'b64_json'):
     """
     Creates an image given a prompt using OpenAI's image generation API.
 
-    :param client: OpenAI client instance configured with API key.
+    :param client: OAI_Assistant instance configured with API key.
     :param prompt: A text description of the desired image(s).
     :param model: The model to use for image generation. Defaults to 'dall-e-2', can be changed to dall-e-3
     :param n: The number of images to generate. Defaults to 1.
@@ -43,11 +43,11 @@ def generate_image(assistant: OAI_Assistant, prompt, model='dall-e-2', n=1, size
         return None
 
 # Define the function to handle image editing
-def edit_image(assistant: OAI_Assistant, image_path, mask_path, prompt, n=1, size='1024x1024'):
+def edit_image(assistant, image_path, mask_path, prompt, n=1, size='1024x1024'):
     """
     Creates an edited or extended image given an original image and a prompt.
 
-    :param client: OpenAI client instance configured with API key.
+    :param client: OAI_Assistant instance configured with API key.
     :param image_path: Path to the original PNG image to be edited.
     :param mask_path: Path to the mask PNG image defining areas to be edited.
     :param prompt: A text description of the changes to be made to the image.
@@ -70,11 +70,11 @@ def edit_image(assistant: OAI_Assistant, image_path, mask_path, prompt, n=1, siz
         return None
 
 # Define the function to handle creating image variations
-def create_image_variation(assistant: OAI_Assistant, image_path, n=1, size='1024x1024'):
+def create_image_variation(assistant, image_path, n=1, size='1024x1024'):
     """
     Creates a variation of a given image using OpenAI's image variation API.
 
-    :param client: OpenAI client instance configured with API key.
+    :param client: OAI_Assistant instance configured with API key.
     :param image_path: Path to the source PNG image for creating variations.
     :param n: The number of variations to generate. Defaults to 1.
     :param size: The size of the generated images. Defaults to '1024x1024'.

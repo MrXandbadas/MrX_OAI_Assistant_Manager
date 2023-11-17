@@ -998,7 +998,7 @@ class OAI_Assistant():
         return run
 
     def process_run(self,thread_id, run_id):
-        run = self.retrieve_run(thread_id, run.id)
+        run = self.retrieve_run(thread_id, run_id)
         while run.status != "completed":
             if run.status == "completed":
                 message_list = self.list_messages(thread_id)

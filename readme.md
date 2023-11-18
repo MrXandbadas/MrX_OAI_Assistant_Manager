@@ -1,7 +1,7 @@
 # OpenAI CMD Terminal Assistant Chat Manager
 
 ---
-## Update 18th Noc 2023 -  Old Personal Prompt was - 315 words 2,065 characters to enable on-demand Function Calling. Now ITS A FUNCTION CALL! A much smaller Instruction set is required (either at the assistant invokation level or the run invokation level)
+## Update 18th Nov 2023 -  Old Personal Prompt was - 315 words 2,065 characters to enable on-demand Function Calling. Now ITS A FUNCTION CALL! A much smaller Instruction set is required (either at the assistant invokation level or the run invokation level)
 ### Update 18th Nov 2023 - Added static functions for openAI image generation.
 ### update 13th Nov 2023 - Function Calling has been added! Assistants CAN write and call custom functions
 ---

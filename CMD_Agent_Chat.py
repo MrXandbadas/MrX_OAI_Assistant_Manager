@@ -81,8 +81,8 @@ def setup_assistant_chat(the_assistant: OAI_Assistant):
     # Lets start by getting the list of assistants
     assistants = the_assistant.assistants
     # Print list in a readable format it is a SyncCursorPage
-    message_user('List of assistants:')
-    message_user(f"{assistants}")
+    #message_user('List of assistants:')
+    #message_user(f"{assistants}")
     local_assistants = []
     for i, assistant in enumerate(assistants.data):
         local_assistants.append(assistant.name)
@@ -161,11 +161,9 @@ def swap_Thread(assistant: OAI_Assistant):
                     #data.content[0].text.value
                     message_user(f"{data.role}: {data.content[0].text.value}")
             return thread_id
+        
 
 #### End of chat working functions ####
-
-
-
 
 def main_run(assistant: OAI_Assistant, assistant_id,thread_id):
 
@@ -180,6 +178,7 @@ def main_run(assistant: OAI_Assistant, assistant_id,thread_id):
         message_user("To quit the chat enter 'Q'/'q' | To start a new thread enter 'swapT' | To swap assistants enter 'swapA'")
         message_user("Please enter your message or a chat control.")
         message = get_input()
+        message_user("------------")
         #Check the users response for logic commands
         # Q for quit, new for new thread. takes one arg "thread Name" and saved the ID to the assistant object appropriately
         # swapA is for swapping the assistant, it initiates the agent selection process again
@@ -217,15 +216,7 @@ def main_run(assistant: OAI_Assistant, assistant_id,thread_id):
                 #add the tool to the tools list
                 tools_list.append(correct_info)
                 
-                #tools_list.append(assistant.make_tool_metadata(tool_name=choice["tool_name"], tool_required=choice["tool_required"], tool_description=choice["tool_description"], tool_properties=choice["tool_properties"]))
-                
-
-            
-            
             #Check if the user wants to enable the tools
-            #message_user(f"Tools Selected: {tools_list}")
-            # grab the tools from the assistant
-            
             message_user("Are you sure you want to enable these tools? (Y/N)")
             choice = get_multiple_choice_input(["Y", "N"])
 
@@ -257,25 +248,22 @@ def main_run(assistant: OAI_Assistant, assistant_id,thread_id):
         run = assistant.create_run(thread_id=thread_id, assistant_id=assistant_id)
         run_done = assistant.process_run(thread_id=thread_id, run_id=run.id)
         #Wait for the run to complete
-        if run_done == "completed":
+        if run_done is not None:
             print("Run Completed")
             message_list = assistant.list_thread_history()
             #check for a new message in the thread
-            for message in message_list.data:
-                    if message.id in assistant.chat_ids:
+            for message in message_list:
+                    message_obj = assistant.retrieve_message(thread_id=thread_id, message_id=message)
+                    if message_obj.id in assistant.chat_ids:
                         continue
                     else:
-                        message_user(f'assistant: {message.content[0].text.value}')
-                        assistant.chat_ids.append(message.id)
+                        message_user(f'assistant: {message_obj.content[0].text.value}')
+                        assistant.chat_ids.append(message_obj.id)
 
         else:
-            print("Run Failed")
-
-
+            print(f"Else out? {run.status}")
 
 #### Main Program ####
-
-
 # Lets connect to openAI assistant Endpoints
 assistant = OAI_Assistant(api_key=api_key, organization=org_id)
 
@@ -301,4 +289,5 @@ if history is not None:
 #start the chat
 message_user("------------")
 message_user("Your Chat has begun")
+
 main_run(assistant, assistant_id,thread_id)

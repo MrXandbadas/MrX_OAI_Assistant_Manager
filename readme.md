@@ -1,4 +1,5 @@
 # OpenAI CMD Terminal Assistant Chat Manager
+#### Change threads, keep track of them and continually chat on them, swap assistants out for different kind of help on threads. Re-tool assistants on demand!
 
 ---
 ## Update 18th Nov 2023 -  Old Personal Prompt was - 315 words 2,065 characters to enable on-demand Function Calling. Now ITS A FUNCTION CALL! A much smaller Instruction set is required (either at the assistant invokation level or the run invokation level)

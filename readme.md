@@ -49,6 +49,7 @@ We'd love to see how you use this script in your projects. Share your stories an
 The `example_cmd_chat.py` script is at the heart of user interaction. It serves as the gateway for users to communicate their needs and for the AI to respond with precision.
 
 ##### Starting the Chat
+![Imagine a gif of a terminal chat like conversation](./screen_capture_demo1.gif)
 
 Users begin by initiating a chat session with the AI assistant. This interaction is the starting point for requesting new functionalities or modifications.
 

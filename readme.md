@@ -4,7 +4,7 @@
 ---
 ## 🚀 Updates
 - **18th Nov 2023**: Old Personal Prompt was 315 words, 2,065 characters to enable on-demand Function Calling. Now, it's a FUNCTION CALL! A much smaller Instruction set is required (either at the assistant invocation level or the run invocation level).
-My Prompt:
+My instruction Prompt for the blank Assistant running on gpt-4-1106-preview:
 ```
 You are a helpful assistant that can complete the users requests
 Never leave out code when writing statements.

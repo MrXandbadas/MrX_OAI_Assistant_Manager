@@ -93,13 +93,8 @@ def setup_assistant_chat(the_assistant: OAI_Assistant):
     message_user(f"You selected {selected}")
     message_user("Lets begin the chat")
 
-    # Lets get the assistant object
-    the_assistant = next((assistant for assistant in assistants.data if assistant.name == selected), None)
-    if assistant is None:
-        message_user(f"No assistant found with name {selected}")
-        return
-    
-    assistant_id = assistant.id
+    # Lets grab the assistant ID
+    assistant_id = assistants.data[local_assistants.index(selected)].id
     the_assistant.assistant_id = assistant_id
     message_user(f"Assistant ID: {assistant_id}")
 

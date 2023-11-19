@@ -35,4 +35,4 @@ if history is not None:
 assistant.message_user("------------")
 assistant.message_user("Your Chat has begun")
 
-assistant.main_run(assistant, assistant_id,thread_id)
+assistant.main_run(assistant_id,thread_id)

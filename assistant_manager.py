@@ -1162,13 +1162,13 @@ class OAI_Assistant():
         if selected == "Name":
             self.message_user("Please enter the name of the thread")
             thread_name = self.get_user_input
-            thread_id = self.setup_thread(self, input_thread_name=thread_name)
+            thread_id = self.setup_thread(input_thread_name=thread_name)
             return thread_id
         # If the user selected ID, ask for the ID
         elif selected == "ID":
             self.message_user("Please enter the ID of the thread")
             thread_id = self.get_user_input()
-            thread_id = self.setup_thread(self, input_thread_id=thread_id)
+            thread_id = self.setup_thread(input_thread_id=thread_id)
             return thread_id
         # If the user selected Multiple Choice, Provide a list of threads and ask the user to select one
         elif selected == "Multiple Choice (Save Locally)":
@@ -1185,7 +1185,7 @@ class OAI_Assistant():
                     self.message_user(f"No thread found with name {selected}")
                     return
 
-                thread_id = self.setup_thread(self, input_thread_id=thread_id)
+                thread_id = self.setup_thread(input_thread_id=thread_id)
 
                 #check for messages in the thread
                 history = self.list_thread_history()

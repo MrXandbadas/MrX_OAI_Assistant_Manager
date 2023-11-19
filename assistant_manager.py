@@ -1161,7 +1161,7 @@ class OAI_Assistant():
         # If the user selected name, ask for the name
         if selected == "Name":
             self.message_user("Please enter the name of the thread")
-            thread_name = self.get_user_input
+            thread_name = self.get_user_input()
             thread_id = self.setup_thread(input_thread_name=thread_name)
             return thread_id
         # If the user selected ID, ask for the ID

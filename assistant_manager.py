@@ -1,4 +1,8 @@
 
+import asyncio
+import base64
+import os
+import time
 from typing import List, Optional
 import requests
 from openai import OpenAI
@@ -8,7 +12,8 @@ import logging
 import json
 import dynamic_functions
 from utils.file_operations import read_file, write_file, exec_python, exec_sh
-from utils.special_functions import get_stock_price, generate_image, create_image_variation, edit_image
+from utils.special_functions import get_stock_price, generate_image, create_image_variation, edit_image, append_new_tool_function_and_metadata
+
 class OAI_Assistant():
     def __init__(self, api_key, organization, timeout=None, log_level=logging.INFO):
         """
@@ -37,19 +42,14 @@ class OAI_Assistant():
         self.current_thread_history = None
         self.current_run = None
         self.assistant_id = None
-
-        #set up some things to handle the assistant files
+        self.change_assistant_id = None
+        self.update_queue = []
         self.assistant_files = {}
         self.assistant_file_ids = {}
         self.assistant_file_names = {}
         self.tool_metadata = {}
-
-        #set up some things to handle list of threads. We will store the thread id and give the thread a name that the user can set and see
         self.threads = None
-
-        #Runs next
         self.runs = {}
-
         self.chat_ids = []
 
 
@@ -1080,26 +1080,38 @@ class OAI_Assistant():
                         if isinstance(function_metadata, str):
                             function_metadata = json.loads(arguments["metadata_dict"])
                         #print(f"Function name: {function_name}")
-
-                        print(f"Function metadata: {function_metadata}")
+                        self.logger.debug(f"Function code: {function_code}")
+                        #print(f"Function metadata: {function_metadata}")
                         # append the function and metadata to the current assistant
-
-                    
                         function_output = append_new_tool_function_and_metadata(function_name, function_code, function_metadata)
-
                         #function_output = append_new_tool_function_and_metadata(self, **(arguments))
                         tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
+
+                    #swap and list assistant
+                    elif action["function"]["name"] == "swap_assistant":
+                        arguments = json.loads(action["function"]["arguments"])
+                        # "arguments": "{\"new_assistant_id\":\"asst_RdgLXrUPKxo1qdQgh2D0CukB\"}",
+                        # Grab the new assistant ID
+                        new_assistant_id = arguments["new_assistant_id"]
+
+                        function_output = self.swap_assistant(new_assistant_id)
+                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
+
+                    elif action["function"]["name"] == "list_assistants":
+                        arguments = json.loads(action["function"]["arguments"])
+                        function_output = self.list_assistants_names(**(arguments))
+                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
+                        
+
                     elif action["function"]["name"] in dir(dynamic_functions):
                         
                         arguments = json.loads(action["function"]["arguments"])
                         function_name = action["function"]["name"]
                         function = getattr(dynamic_functions, function_name)
-                        # Wrap the function call in a try except block so we can hand the error back to as an output
-                        
                         #check if the arguments are a string and if so convert to dict
-                        
                         function_output = function(**(arguments))
-                    
+                        # give it time to process
+                        time.sleep(2)
                         
                         tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
                     else:
@@ -1123,6 +1135,28 @@ class OAI_Assistant():
         # Get the input from the user
         return input("User: ")
     
+    def get_multiple_choice_multiple_input(self, options:dict):
+        print('Please input Numbers only to select any of the following options or enter Q to leave:')
+        for i, option in enumerate(options):
+            print(f'{i+1}. {option}')
+        while True:
+            try:
+                choice = input('>>> ')
+                if choice.lower() in ["q", "quit", "exit"]:
+                    return None
+                if "," in choice:
+                    choices = [int(i) - 1 for i in choice.split(",")]
+                    if any(choice >= len(options) or choice < 0 for choice in choices):
+                        raise ValueError
+                    return [options[list(options.keys())[choice]] for choice in choices]
+                else:
+                    choice = int(choice) - 1
+                    if choice >= len(options) or choice < 0:
+                        raise ValueError
+                    return [options[list(options.keys())[choice]]] # Modified line
+            except ValueError:
+                print('Please enter a valid option')
+
     def get_multiple_choice_input(self, choices):
         """Overwrite this function to change how the user is messaged"""
         # Display the options with corresponding numbers
@@ -1161,7 +1195,7 @@ class OAI_Assistant():
         # If the user selected name, ask for the name
         if selected == "Name":
             self.message_user("Please enter the name of the thread")
-            thread_name = self.get_user_input()
+            thread_name = self.get_user_input()    
             thread_id = self.setup_thread(input_thread_name=thread_name)
             return thread_id
         # If the user selected ID, ask for the ID
@@ -1228,19 +1262,55 @@ class OAI_Assistant():
         self.assistant_id = assistant_id
         self.message_user(f"Assistant ID: {assistant_id}")
 
+        return True
+
+    def swap_assistant(self, assistant_id):
+        """
+        Takes the assistant ID and swaps the assistant
+        """
+        self.change_assistant_id = assistant_id
+        # queue the update
+        self.queue_update("change_assistant")
         return assistant_id
+    
+    def change_assistant(self):
+        """
+        Changes the assistant ID
+        """
+        self.assistant_id = self.change_assistant_id
+        return self.assistant_id
+    
+    def list_assistants_names(self):
+        """
+        Returns a dictionary of assistant names and their corresponding IDs
+        """
+        assistants = self.assistants
+        assistant_dict = {}
+        for i, assistant in enumerate(assistants.data):
+            assistant_dict[assistant.name] = assistant.id
+        return assistant_dict
+    
 
     def main_run(self, assistant_id,thread_id):
         while True:
+            
+            check_updates = self.check_update_assistant()
+            #
+            if check_updates is not None:
+                #display the updates
+                for function_name, function_output in check_updates.items():
+                    #Lets debug it incase somthing goes wrong
+                    self.logger.debug(f"Function Dynamically updated: {function_name} | Output: {function_output}")
+                    
+
             # Get the input from the user
             # Remind the users of their chat controls
-
             self.message_user("""------------
-                              Your chat controls are as follows:
-                              To quit the chat enter 'Q'/'q' | To start a new thread enter 'swapT' | To swap assistants enter 'swapA'
-                              Please enter your message or a chat control.
-                              ------------
-                              """)
+            Your chat controls are as follows:
+            To quit the chat enter 'Q'/'q' | To start a new thread enter 'swapT' | To swap assistants enter 'swapA'
+            Please enter your message or a chat control.
+            ------------
+            """)
             message = self.get_user_input()
             #Check the users response for logic commands
             # Q for quit, new for new thread. takes one arg "thread Name" and saved the ID to the assistant object appropriately
@@ -1252,7 +1322,7 @@ class OAI_Assistant():
                 self.message_user("Enabling tools")
                 #Grab the tools from the assistant function metadata
                 tools = self.load_tool_metadata()
-                choices = self.get_multiple_choice_input(tools)
+                choices = self.get_multiple_choice_multiple_input(tools)
                 print(choices)
                 #Collect the information about the selection. int has been returned which we need to use to grab the correct dict item
                 tools_list = []
@@ -1286,7 +1356,7 @@ class OAI_Assistant():
                 if choice == "Y":
                     #enable the tools
                     
-                    assistant_new = self.enable_tools(assistant_id, tools_list)
+                    assistant_new = self.enable_tools(self.assistant_id, tools_list)
                     self.assistant_id = assistant_new.id
 
                 else:
@@ -1302,13 +1372,13 @@ class OAI_Assistant():
                 continue
 
             elif message == "swapA":
-                assistant_id = self.setup_assistant_chat()
+                self.setup_assistant_chat()
                 continue
 
             ThreadMessage = self.create_message(thread_id=thread_id, role="user", content=message)
             user_message_id = ThreadMessage.id
             self.chat_ids.append(user_message_id)
-            run = self.create_run(thread_id=thread_id, assistant_id=assistant_id)
+            run = self.create_run(thread_id=thread_id, assistant_id=self.assistant_id)
             run_done = self.process_run(thread_id=thread_id, run_id=run.id)
             #Wait for the run to complete
             if run_done is not None:
@@ -1317,6 +1387,8 @@ class OAI_Assistant():
                 #check for a new message in the thread
                 for message in message_list:
                         message_obj = self.retrieve_message(thread_id=thread_id, message_id=message)
+                        if message_obj.id is None:
+                            continue
                         if message_obj.id in self.chat_ids:
                             continue
                         else:
@@ -1326,3 +1398,53 @@ class OAI_Assistant():
             else:
                 print(f"Else out? {run.status}")
     
+    ###
+    # Section for running functions in relation to the assistant dynamically.... ;)
+
+    # Que the assistant to update
+    
+    def queue_update(self, function_call, **kwargs):
+        """
+        Queues the assistant to update
+
+        Args:
+            function_call: The function to call holding information about the update required to the oai class
+            kwargs: The arguments to pass to the function
+        """
+        self.update_queue.append((function_call, kwargs))
+
+        return True
+    
+    def get_update_queue(self):
+        """
+        Returns the update queue
+
+        Returns:
+            list: The update queue
+        """
+        return self.update_queue
+    
+
+    def check_update_assistant(self):
+        """
+        Checks the update queue and runs the functions in the queue
+        """
+        output_results = {}
+        # Check if the update queue is empty
+        if len(self.update_queue) == 0:
+            return None
+            
+        
+        # Run the functions in the queue
+        for function_name, kwargs in self.update_queue:
+            function = getattr(self, function_name)
+            function_output = function(**(kwargs))
+            output_results[function_name] = function_output
+            self.logger.debug(f"Function: {function_name} | Output: {function_output}")
+        
+        # Empty the queue
+        self.update_queue = []
+        if output_results is not None or {}:
+            return output_results
+
+    ###

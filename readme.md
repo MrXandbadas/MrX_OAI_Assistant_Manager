@@ -3,6 +3,7 @@
 
 ---
 ## 🚀 Updates
+- **20th Nov 2023**: Assistants can now be given the list_assistants and swap_assistants function calls which enable you to list your assistants and change assistant by requesting to speak with another assistant in chat. Forget the "swapA" command when your assistants are tooled with these internal commands!
 - **19th Nov 2023**: Discord Bot implementation seems to work well. Code comming over the next 24H-48H.
 - **18th Nov 2023**: Old Personal Prompt was 315 words, 2,065 characters to enable on-demand Function Calling. Now, it's a FUNCTION CALL! A much smaller Instruction set is required (either at the assistant invocation level or the run invocation level).
 My instruction Prompt for the blank Assistant running on gpt-4-1106-preview:

@@ -1,6 +1,6 @@
 {
-    "write_to_File": {
-        "tool_name": "write_to_file",
+    "write_File": {
+        "tool_name": "write_file",
         "tool_required": "file_name",
         "tool_description": "Write the output to a file",
         "tool_properties": {
@@ -44,36 +44,6 @@
             "script": {
                 "type": "string",
                 "description": "Valid shell script to execute."
-            }
-        }
-    },
-    "get_weather_forecast": {
-        "tool_name": "get_weather_forecast",
-        "tool_required": "latitude, longitude",
-        "tool_description": "Retrieve weather information using latitude and longitude",
-        "tool_properties": {
-            "latitude": {
-                "type": "integer",
-                "description": "The latitude coordinate for the location."
-            },
-            "longitude": {
-                "type": "integer",
-                "description": "The longitude coordinate for the location."
-            },
-            "current_weather": {
-                "type": "boolean",
-                "description": "A boolean indicating if current weather data should be fetched.",
-                "default": true
-            },
-            "hourly_forecast": {
-                "type": "boolean",
-                "description": "A boolean indicating if hourly forecast data should be fetched.",
-                "default": false
-            },
-            "daily_forecast": {
-                "type": "boolean",
-                "description": "A boolean indicating if daily forecast data should be fetched.",
-                "default": false
             }
         }
     },
@@ -177,5 +147,43 @@
                 "default": "1024x1024"
             }
         }
-    }
+    },
+    "append_new_tool_function_and_metadata": {
+        "tool_name": "append_new_tool_function_and_metadata",
+        "tool_required": "function_name, function_code, metadata_dict",
+        "tool_description": "Appends a new tool function and its metadata info to dynamic_functions.py and functions_metadata.json respectively",
+        "tool_properties": {
+            "function_name": {
+                "type": "string",
+                "description": "The name of the new tool function. as written in the code."
+            },
+            "function_code": {
+                "type": "string",
+                "description": "The function definition for the new tool function."
+            },
+            "metadata_dict": {
+                "type": "string",
+                "description": "A string of the metadata dictionary for the new tool function in the required format. This needs to be a dict with the tool_name, tool_required, tool_description, and tool_properties keys. Ensure the types are full string denotations (e.g. 'string' instead of str)."
+            }
+        }
+    },
+    
+        "list_assistants": {
+            "tool_name": "list_assistants",
+            "tool_required": "None",
+            "tool_description": "Lists the name and ID of all the assistants available in your organization. Only show the names as the IDs are what we use to run the swap_assistant when required",
+            "tool_properties": {}
+        },
+        "swap_assistant": {
+            "tool_name": "swap_assistant",
+            "tool_required": "new_assistant_id",
+            "tool_description": "Swaps Yourself out with the selected assistant using the provided new assistant ID.",
+            "tool_properties": {
+                "new_assistant_id": {
+                    "type": "string",
+                    "description": "The ID of the new assistant to switch to."
+                }
+            }
+        }
+    
 }

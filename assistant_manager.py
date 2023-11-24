@@ -1119,22 +1119,23 @@ class OAI_Assistant():
                         #function_output = append_new_tool_function_and_metadata(self, **(arguments))
                         tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
 
-                    #swap and list assistant
-                    elif action["function"]["name"] == "swap_assistant":
+                    #functions registerd on self
+                    elif action["function"]["name"] in dir(self):
                         arguments = json.loads(action["function"]["arguments"])
-                        # "arguments": "{\"new_assistant_id\":\"asst_RdgLXrUPKxo1qdQgh2D0CukB\"}",
-                        # Grab the new assistant ID
-                        new_assistant_id = arguments["new_assistant_id"]
+                        function_name = action["function"]["name"]
+                        function = getattr(self, function_name)
+                        #check if the arguments are a string and if so convert to dict
+                        print(f"ARGUMENTS {arguments}")
+                        if isinstance(arguments, str):
+                            arguments = json.loads(arguments)
 
-                        function_output = self.swap_assistant(new_assistant_id)
-                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
-
-                    elif action["function"]["name"] == "list_assistants":
-                        arguments = json.loads(action["function"]["arguments"])
-                        function_output = self.list_assistants_names(**(arguments))
+                        function_output = function(**(arguments))
+                        # give it time to process
+                        time.sleep(2)
+                        
                         tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
                         
-
+                    #functions registered in the dynamic_functions.py file
                     elif action["function"]["name"] in dir(dynamic_functions):
                         
                         arguments = json.loads(action["function"]["arguments"])
@@ -1228,7 +1229,7 @@ class OAI_Assistant():
         if selected == "Name":
             self.message_user("Please enter the name of the thread")
             thread_name = self.get_user_input()
-              
+
             thread_id = self.setup_thread(input_thread_name=thread_name)
             return thread_id
         # If the user selected ID, ask for the ID
@@ -1297,14 +1298,14 @@ class OAI_Assistant():
 
         return True
 
-    def swap_assistant(self, assistant_id):
+    def swap_assistant(self, new_assistant_id):
         """
         Takes the assistant ID and swaps the assistant
         """
-        self.change_assistant_id = assistant_id
+        self.change_assistant_id = new_assistant_id
         # queue the update
         self.queue_update("change_assistant")
-        return assistant_id
+        return new_assistant_id
     
     def change_assistant(self):
         """
@@ -1322,7 +1323,7 @@ class OAI_Assistant():
         for i, assistant in enumerate(assistants.data):
             assistant_dict[assistant.name] = assistant.id
         return assistant_dict
-    
+       
     def re_tool(self, autogen=False):
         self.message_user("Enabling tools")
         #Grab the tools from the assistant function metadata
@@ -1408,6 +1409,7 @@ class OAI_Assistant():
                 break
             elif message == "tool":
                 self.re_tool()
+                continue
             elif message == "swapT":
                 thread_swapped = self.swap_Thread()
 
@@ -1437,6 +1439,7 @@ class OAI_Assistant():
                         if message_obj.id in self.chat_ids:
                             continue
                         else:
+                            message
                             self.message_user(f'assistant: {message_obj.content[0].text.value}')
                             self.chat_ids.append(message_obj.id)
 

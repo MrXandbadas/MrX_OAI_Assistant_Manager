@@ -110,7 +110,7 @@ async def main_app():
     config_list = [
             { 
                 "model": "gpt-4-1106-preview",  # 0631 or newer is needed to use functions
-                "api_key": "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"
+                "api_key": "Key_Here"
             }
     ]
 

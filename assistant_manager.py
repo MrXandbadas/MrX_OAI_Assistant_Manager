@@ -1,6 +1,7 @@
 
 import asyncio
 import base64
+import inspect
 import os
 import time
 from typing import List, Optional
@@ -11,6 +12,7 @@ from openai.types.beta.threads import ThreadMessage
 import logging
 import json
 import dynamic_functions
+from utils import file_operations, special_functions
 from utils.file_operations import read_file, write_file, exec_python, exec_sh
 from utils.special_functions import get_stock_price, generate_image, create_image_variation, edit_image, append_new_tool_function_and_metadata
 
@@ -1068,37 +1070,7 @@ class OAI_Assistant():
                 required_actions = json.loads(required_actions_json)
                 tools_output = []
                 for action in required_actions["tool_calls"]:
-                    if action["function"]["name"] == "get_stock_price":
-                        arguments = json.loads(action["function"]["arguments"])
-                        stock_price = get_stock_price(arguments["symbol"])
-                        tools_output.append({"tool_call_id": action["id"], "output": stock_price})
-                    #else if check if its in the dynamic tool code
-                    elif action["function"]["name"] == "write_file":
-                        arguments = json.loads(action["function"]["arguments"])
-                        write_file(arguments["file_name"], arguments["content"])
-                        tools_output.append({"tool_call_id": action["id"], "output": "Success"})
-                    elif action["function"]["name"] == "read_file":
-                        arguments = json.loads(action["function"]["arguments"])
-                        file_content = read_file(arguments["file_name"])
-                        tools_output.append({"tool_call_id": action["id"], "output": file_content})
-                    elif action["function"]["name"] == "exec_python":
-                        arguments = json.loads(action["function"]["arguments"])
-                        function_output = exec_python(arguments["cell"])
-                        tools_output.append({"tool_call_id": action["id"], "output": function_output})
-                    #elif the action is dynamic_{function} then we need to call the function
-                    elif action["function"]["name"] == "generate_image":
-                        arguments = json.loads(action["function"]["arguments"])
-                        function_output = generate_image(self, **arguments)
-                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
-                    elif action["function"]["name"] == "create_image_variation":
-                        arguments = json.loads(action["function"]["arguments"])
-                        function_output = create_image_variation(self, **arguments)
-                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
-                    elif action["function"]["name"] == "edit_image":
-                        arguments = json.loads(action["function"]["arguments"])
-                        function_output = edit_image(self, **arguments)
-                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
-                    elif action["function"]["name"] == "append_new_tool_function_and_metadata":
+                    if action["function"]["name"] == "append_new_tool_function_and_metadata":
                         arguments = json.loads(action["function"]["arguments"])
                         # get the function name
                         function_name = arguments["function_name"]
@@ -1118,6 +1090,32 @@ class OAI_Assistant():
                         function_output = append_new_tool_function_and_metadata(function_name, function_code, function_metadata, function_meta_description)
                         #function_output = append_new_tool_function_and_metadata(self, **(arguments))
                         tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
+                        
+                    # Functions Dynamically registered in the utils/special_functions.py file    
+                    elif action["function"]["name"] in dir(special_functions):
+                        arguments = json.loads(action["function"]["arguments"])
+                        function_name = action["function"]["name"]
+                        function = getattr(special_functions, function_name)
+                        #check if the arguments are a string and if so convert to dict
+                        if isinstance(arguments, str):
+                            arguments = json.loads(arguments)
+                        # Does the function need self?
+                        if "assistant" in inspect.getfullargspec(function).args:
+                            function_output = function(self, **(arguments))
+                        else:
+                            function_output = function(**(arguments))
+                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
+
+                    # Functions Dynamically registered in the utils/file_operations.py file
+                    elif action["function"]["name"] in dir(file_operations):
+                        arguments = json.loads(action["function"]["arguments"])
+                        if isinstance(arguments, str):
+                            arguments = json.loads(arguments)
+                        function_name = action["function"]["name"]
+                        function = getattr(file_operations, function_name)
+                        #check if the arguments are a string and if so convert to dict
+                        function_output = function(**(arguments))
+                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
 
                     #functions registerd on self
                     elif action["function"]["name"] in dir(self):
@@ -1128,11 +1126,9 @@ class OAI_Assistant():
                         print(f"ARGUMENTS {arguments}")
                         if isinstance(arguments, str):
                             arguments = json.loads(arguments)
-
                         function_output = function(**(arguments))
                         # give it time to process
                         time.sleep(2)
-                        
                         tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
                         
                     #functions registered in the dynamic_functions.py file

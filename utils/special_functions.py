@@ -1,19 +1,12 @@
 import json
 from yfinance import Ticker
 
-def get_stock_price(stock):
-    stock = Ticker(stock)
-    price = stock.history(period='1d')['Close'].iloc[0]
+def get_stock_price(symbol):
+    symbol = Ticker(symbol)
+    price = symbol.history(period='1d')['Close'].iloc[0]
     return price
 
-from yfinance import Ticker
 #from assistant_manager import OAI_Assistant
-
-def get_stock_price(stock):
-    stock = Ticker(stock)
-    price = stock.history(period='1d')['Close'].iloc[0]
-    return price
-
 
 def generate_image(assistant, prompt, model='dall-e-2', n=1, size='1024x1024', quality='standard', style='vivid', response_format='url' or 'b64_json'):
     """

@@ -3,6 +3,7 @@
 
 ---
 ## 🚀 Updates
+- **24th Nov 2023**: Autogen by Microsoft has always been brilliant. Now with the addition of Assistants we can have agentic workflows with some serious frameworking behind the chats. Dcode is being tested in this application
 - **20th Nov 2023**: Assistants can now be given the list_assistants and swap_assistants function calls which enable you to list your assistants and change assistant by requesting to speak with another assistant in chat. Forget the "swapA" command when your assistants are tooled with these internal commands!
 - **19th Nov 2023**: Discord Bot implementation seems to work well. Code comming over the next 24H-48H.
 - **18th Nov 2023**: Old Personal Prompt was 315 words, 2,065 characters to enable on-demand Function Calling. Now, it's a FUNCTION CALL! A much smaller Instruction set is required (either at the assistant invocation level or the run invocation level).

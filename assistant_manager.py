@@ -1090,6 +1090,7 @@ class OAI_Assistant():
                         function_output = append_new_tool_function_and_metadata(function_name, function_code, function_metadata, function_meta_description)
                         #function_output = append_new_tool_function_and_metadata(self, **(arguments))
                         tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
+                        continue
                         
                     # Functions Dynamically registered in the utils/special_functions.py file    
                     elif action["function"]["name"] in dir(special_functions):

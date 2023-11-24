@@ -350,6 +350,36 @@ class OAI_Assistant():
         }
         # Return the metadata
         return metadata
+    
+    def make_autogen_tool_metadata(self, tool_name, tool_required, tool_description, tool_properties, tool_meta_description):
+        """
+        Registers metadata for a tool.
+
+        Args:
+            tool_name (str): The name of the tool.
+            tool_required (str): The ID of the tool.
+            tool_description (str): The description of the tool.
+            tool_schema (dict): The schema of the tool.
+            tool_meta_description (str): The meta description of the tool.
+
+        Returns:
+            None
+        """
+        # Define the metadata for the tool
+        metadata = {
+                "name": tool_name,
+                "description": tool_description,
+                "parameters": {
+                    "type": "object",
+                    "properties": tool_properties,
+                    "required": [tool_required]
+                },
+                "description": tool_meta_description
+        }
+        # Return the metadata
+        return metadata
+
+    
 
         
     # Lets enable tool use for the assistant
@@ -1076,6 +1106,8 @@ class OAI_Assistant():
                         function_code = arguments["function_code"]
                         # get the metadata dict
                         function_metadata = arguments["metadata_dict"]
+
+                        function_meta_description = arguments["tool_meta_description"]
                         #Check if we need to json.loads the metadata
                         if isinstance(function_metadata, str):
                             function_metadata = json.loads(arguments["metadata_dict"])
@@ -1083,7 +1115,7 @@ class OAI_Assistant():
                         self.logger.debug(f"Function code: {function_code}")
                         #print(f"Function metadata: {function_metadata}")
                         # append the function and metadata to the current assistant
-                        function_output = append_new_tool_function_and_metadata(function_name, function_code, function_metadata)
+                        function_output = append_new_tool_function_and_metadata(function_name, function_code, function_metadata, function_meta_description)
                         #function_output = append_new_tool_function_and_metadata(self, **(arguments))
                         tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
 
@@ -1195,7 +1227,8 @@ class OAI_Assistant():
         # If the user selected name, ask for the name
         if selected == "Name":
             self.message_user("Please enter the name of the thread")
-            thread_name = self.get_user_input()    
+            thread_name = self.get_user_input()
+              
             thread_id = self.setup_thread(input_thread_name=thread_name)
             return thread_id
         # If the user selected ID, ask for the ID
@@ -1290,6 +1323,61 @@ class OAI_Assistant():
             assistant_dict[assistant.name] = assistant.id
         return assistant_dict
     
+    def re_tool(self, autogen=False):
+        self.message_user("Enabling tools")
+        #Grab the tools from the assistant function metadata
+        tools = self.load_tool_metadata()
+        choices = self.get_multiple_choice_multiple_input(tools)
+        print(choices)
+        #Collect the information about the selection. int has been returned which we need to use to grab the correct dict item
+        tools_list = []
+        correct_info = [{
+            "type": "function",
+            "function": {}
+        }]
+        tool_metadata = None
+        #metadata = {}
+        #tools is a dict and choices is a int, we need to grab the correct item via the int
+        #grab the item from the dict in a way that uses the int. We need to convert the dict to a list first
+        for choice in choices:
+            #grab the correct info from the list
+            tool_name = choice["tool_name"]
+            tool_required = choice["tool_required"]
+            tool_description = choice["tool_description"]
+            tool_properties = choice["tool_properties"]
+            if autogen:
+                tool_meta_description = choice["tool_meta_description"]
+                tool_metadata = self.make_autogen_tool_metadata(tool_name=tool_name, tool_required=tool_required, tool_description=tool_description, tool_properties=tool_properties, tool_meta_description=tool_meta_description)
+            else:
+                tool_metadata = self.make_tool_metadata(tool_name=tool_name, tool_required=tool_required, tool_description=tool_description, tool_properties=tool_properties)
+            # add the tool to the metadata dict
+
+            if tool_metadata is not None:
+                correct_info = {
+                "type": "function",
+                "function": tool_metadata
+                }
+                #add the tool to the tools list
+                tools_list.append(correct_info)
+            else:
+                self.message_user("Tool not added, there was an error with the metadata")
+            
+        #Check if the user wants to enable the tools
+        self.message_user("Are you sure you want to enable these tools? (Y/N)")
+        choice = self.get_multiple_choice_input(["Y", "N"])
+
+        if choice == "Y":
+            #enable the tools
+            if autogen == False:
+                assistant_new = self.enable_tools(self.assistant_id, tools_list)
+                self.assistant_id = assistant_new.id
+            return True, tools_list
+
+        else:
+            self.message_user("Tools not enabled")
+            return False, assistant_new.id
+        
+        
 
     def main_run(self, assistant_id,thread_id):
         while True:
@@ -1319,50 +1407,7 @@ class OAI_Assistant():
             if message == "Q" or message == "q":
                 break
             elif message == "tool":
-                self.message_user("Enabling tools")
-                #Grab the tools from the assistant function metadata
-                tools = self.load_tool_metadata()
-                choices = self.get_multiple_choice_multiple_input(tools)
-                print(choices)
-                #Collect the information about the selection. int has been returned which we need to use to grab the correct dict item
-                tools_list = []
-                correct_info = [{
-                    "type": "function",
-                    "function": {}
-                }]
-                
-                #metadata = {}
-                #tools is a dict and choices is a int, we need to grab the correct item via the int
-                #grab the item from the dict in a way that uses the int. We need to convert the dict to a list first
-                for choice in choices:
-                    #grab the correct info from the list
-                    tool_name = choice["tool_name"]
-                    tool_required = choice["tool_required"]
-                    tool_description = choice["tool_description"]
-                    tool_properties = choice["tool_properties"]
-                    tool_metadata = self.make_tool_metadata(tool_name=tool_name, tool_required=tool_required, tool_description=tool_description, tool_properties=tool_properties)
-                    # add the tool to the metadata dict
-                    correct_info = {
-                    "type": "function",
-                    "function": tool_metadata
-                    }
-                    #add the tool to the tools list
-                    tools_list.append(correct_info)
-                    
-                #Check if the user wants to enable the tools
-                self.message_user("Are you sure you want to enable these tools? (Y/N)")
-                choice = self.get_multiple_choice_input(["Y", "N"])
-
-                if choice == "Y":
-                    #enable the tools
-                    
-                    assistant_new = self.enable_tools(self.assistant_id, tools_list)
-                    self.assistant_id = assistant_new.id
-
-                else:
-                    self.message_user("Tools not enabled")
-                
-                continue
+                self.re_tool()
             elif message == "swapT":
                 thread_swapped = self.swap_Thread()
 

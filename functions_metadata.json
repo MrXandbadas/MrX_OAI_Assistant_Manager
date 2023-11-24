@@ -8,7 +8,8 @@
                 "type": "string",
                 "description": "The stock ticker symbol"
             }
-        }
+        },
+        "tool_meta_description": "Get the current stock price of a company"
     },
     "get_arxiv_papers": {
         "tool_name": "get_arxiv_papers",
@@ -34,7 +35,8 @@
                 "description": "Order of sorting (ascending or descending)",
                 "default": "descending"
             }
-        }
+        },
+        "tool_meta_description": "Retrieve academic papers from arXiv based on a search query"
     },
     "get_weather_forecast": {
         "tool_name": "get_weather_forecast",
@@ -64,6 +66,23 @@
                 "description": "A boolean indicating if daily forecast data should be fetched.",
                 "default": false
             }
-        }
+        },
+        "tool_meta_description": "Retrieve weather information using latitude and longitude using an API"
+    },
+    "clone_git_repo": {
+        "tool_name": "clone_git_repo",
+        "tool_required": "repo_link, save_location",
+        "tool_description": "Attempts to clone a GitHub repository from a given link to a specified location",
+        "tool_properties": {
+            "repo_link": {
+                "type": "string",
+                "description": "The GitHub repository URL"
+            },
+            "save_location": {
+                "type": "string",
+                "description": "The local path where to clone the repository"
+            }
+        },
+        "tool_meta_description": "Clones a GitHub repository using a provided URL to a specified local path."
     }
 }

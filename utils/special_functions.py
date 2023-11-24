@@ -1,3 +1,4 @@
+import json
 from yfinance import Ticker
 
 def get_stock_price(stock):
@@ -6,7 +7,7 @@ def get_stock_price(stock):
     return price
 
 from yfinance import Ticker
-from assistant_manager import OAI_Assistant
+#from assistant_manager import OAI_Assistant
 
 def get_stock_price(stock):
     stock = Ticker(stock)
@@ -93,11 +94,15 @@ def create_image_variation(assistant, image_path, n=1, size='1024x1024'):
         return None
 
     # Function to append a new tool function and its metadata
-def append_new_tool_function_and_metadata(function_name: str, function_code: str, metadata: dict):
+def append_new_tool_function_and_metadata(function_name: str, function_code: str, metadata: dict, tool_meta_description: str):
     try:
         # Logic to append new function code to dynamic_functions.py
         with open('dynamic_functions.py', 'a') as file:
             file.write(f'\n\n{function_code}')
+
+        
+        # Add the tool_meta_description to the metadata dict
+        metadata['tool_meta_description'] = tool_meta_description
 
         # Logic to append new metadata to functions_metadata.json
         with open('functions_metadata.json', 'r+') as file:

@@ -80,3 +80,14 @@ def get_weather_forecast(latitude: float, longitude: float, current_weather: boo
     except Exception as err:
         print(f'Other error occurred: {err}')
         return None
+
+
+from git import Repo
+from git.exc import GitError
+
+def clone_git_repo(repo_link, save_location):
+    try:
+        Repo.clone_from(repo_link, save_location)
+        return True
+    except GitError as e:
+        return False

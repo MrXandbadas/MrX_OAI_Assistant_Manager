@@ -12,7 +12,8 @@
                 "type": "string",
                 "description": "The content to write to the file"
             }
-        }
+        },
+        "tool_meta_description" : "This tool takes a text input and a file name and writes the text to the file. This overwrites any existing file with the same name."
     },
     "read_File": {
         "tool_name": "read_file",
@@ -23,7 +24,8 @@
                 "type": "string",
                 "description": "The name of the file"
             }
-        }
+        },
+        "tool_meta_description" : "This tool takes a file name and returns the text content of the file."
     },
     "exec_python": {
         "tool_name": "exec_python",
@@ -34,7 +36,8 @@
                 "type": "string",
                 "description": "Valid Python cell to execute."
             }
-        }
+        },
+        "tool_meta_description" : "This tool takes a python cell and executes it in the ipython kernel. The output of the cell is returned."
     },
     "exec_sh": {
         "tool_name": "exec_sh",
@@ -45,7 +48,8 @@
                 "type": "string",
                 "description": "Valid shell script to execute."
             }
-        }
+        },
+        "tool_meta_description" : "This tool takes a shell script and executes it in the shell. The output of the script is returned."
     },
     "generate_image": {
         "tool_name": "generate_image",
@@ -86,7 +90,8 @@
                 "description": "The format of the response ('url', 'b64_json').",
                 "default": "url"
             }
-        }
+        },
+        "tool_meta_description" : "This tool takes a prompt and generates an image using the OpenAI image generation API. The output is a URL to the generated image."
     },
     "edit_image": {
         "tool_name": "edit_image",
@@ -120,7 +125,8 @@
                 "description": "The size of the edited images ('256x256', '512x512', '1024x1024').",
                 "default": "1024x1024"
             }
-        }
+        },
+        "tool_meta_description" : "This tool takes an image and a prompt and generates an edited image using the OpenAI image generation API. The output is a URL to the generated image."
     },
     "create_image_variation": {
         "tool_name": "create_image_variation",
@@ -146,11 +152,12 @@
                 "description": "The size of the image variations ('256x256', '512x512', '1024x1024').",
                 "default": "1024x1024"
             }
-        }
+        },
+        "tool_meta_description" : "This tool takes an image and generates variations of the image using the OpenAI image generation API. The output is a URL to the generated image."
     },
     "append_new_tool_function_and_metadata": {
         "tool_name": "append_new_tool_function_and_metadata",
-        "tool_required": "function_name, function_code, metadata_dict",
+        "tool_required": "function_name, function_code, metadata_dict, tool_meta_description",
         "tool_description": "Appends a new tool function and its metadata info to dynamic_functions.py and functions_metadata.json respectively",
         "tool_properties": {
             "function_name": {
@@ -164,15 +171,21 @@
             "metadata_dict": {
                 "type": "string",
                 "description": "A string of the metadata dictionary for the new tool function in the required format. This needs to be a dict with the tool_name, tool_required, tool_description, and tool_properties keys. Ensure the types are full string denotations (e.g. 'string' instead of str)."
+            },
+            "tool_meta_description" : {
+                "type": "string",
+                "description": "A tldr explanation of what the tool does."
             }
-        }
+        },
+        "tool_meta_description" : "This tool takes a function name, function code, and metadata dictionary and appends the function and metadata to the dynamic_functions.py and functions_metadata.json files respectively."
     },
     
         "list_assistants": {
             "tool_name": "list_assistants",
             "tool_required": "None",
             "tool_description": "Lists the name and ID of all the assistants available in your organization. Only show the names as the IDs are what we use to run the swap_assistant when required",
-            "tool_properties": {}
+            "tool_properties": {},
+            "tool_meta_description" : "This tool takes no inputs and returns a list of all the assistants available in your organization. Only show the names as the IDs are what we use to run the swap_assistant when required"
         },
         "swap_assistant": {
             "tool_name": "swap_assistant",
@@ -183,7 +196,8 @@
                     "type": "string",
                     "description": "The ID of the new assistant to switch to."
                 }
-            }
+            },
+            "tool_meta_description" : "This tool takes the ID of the new assistant to switch to and swaps you out with the selected assistant."
         }
     
 }

@@ -53,6 +53,7 @@ class OAI_Assistant():
         self.threads = None
         self.runs = {}
         self.chat_ids = []
+        self.autogen_assistants = None
 
 
     def save_json(self, file_name, data):
@@ -270,7 +271,7 @@ class OAI_Assistant():
         self.save_json('thread_ids.json', data)
 
 
-    def load_tool_metadata(self):
+    def load_tool_metadata(self) -> dict:
         """
         Loads the metadata from functions_metadata.json file
 
@@ -353,6 +354,12 @@ class OAI_Assistant():
         # Return the metadata
         return metadata
     
+    def list_autogen_assistants(self):
+        """
+        Returns a list of autogen Assistants
+        """
+        return self.autogen_assistants
+
     def make_autogen_tool_metadata(self, tool_name, tool_required, tool_description, tool_properties, tool_meta_description):
         """
         Registers metadata for a tool.
@@ -1320,6 +1327,69 @@ class OAI_Assistant():
         for i, assistant in enumerate(assistants.data):
             assistant_dict[assistant.name] = assistant.id
         return assistant_dict
+    
+    def list_system_tools(self):
+        """
+        returns a list of the tool names
+        """
+        tools = self.load_tool_metadata()
+        tool_names = []
+
+        #tools is a dict of named dicts, we need to grab the name from each dict
+        #"list_system_tools": {
+        #    "tool_name": "list_system_tools",
+        #    "tool_required": "",
+        #    "tool_description": "Provides a list of all available system tool names",
+        #    "tool_properties": {},
+        #    "tool_meta_description": "Returns a list of all available tool names."
+        #}
+
+        for tool in tools:
+            tool_names.append(tool.get("tool_name"))
+        
+        return tool_names
+    
+    
+    def get_tool_by_name(self, tool_name):
+        """
+        Returns a tool object by name
+        """
+        tools = self.load_tool_metadata()
+        for tool in tools:
+            if tool["tool_name"] == tool_name:
+                return tool
+        return None
+    
+    
+    def get_tool_list_by_names(self, tool_names):
+        """
+        Returns a list of tools from the tool names
+        """
+        tools = []
+        tools_list = []
+        for tool_name in tool_names:
+            tool = self.get_tool_by_name(tool_name)
+            tools.append(tool)
+
+        for selected_tool in tools:
+            #grab the correct info from the list
+            tool_name = selected_tool["tool_name"]
+            tool_required = selected_tool["tool_required"]
+            tool_description = selected_tool["tool_description"]
+            tool_properties = selected_tool["tool_properties"]
+            tool_meta_description = selected_tool["tool_meta_description"]
+            tool_metadata = self.make_autogen_tool_metadata(tool_name=tool_name, tool_required=tool_required, tool_description=tool_description, tool_properties=tool_properties, tool_meta_description=tool_meta_description)
+
+            if tool_metadata is not None:
+                correct_info = {
+                "type": "function",
+                "function": tool_metadata
+                }
+                #add the tool to the tools list
+                tools_list.append(correct_info)
+
+        
+        return tools_list
        
     def re_tool(self, autogen=False):
         self.message_user("Enabling tools")
@@ -1379,7 +1449,6 @@ class OAI_Assistant():
 
     def main_run(self, assistant_id,thread_id):
         while True:
-            
             check_updates = self.check_update_assistant()
             #
             if check_updates is not None:

@@ -117,3 +117,10 @@ Spotify opens (or an error is returned). Spotify is just one example. All functi
 
 ---
 
+
+------
+
+Found 26/11/23:
+This is cool - not mine but cool
+LATM (Large Language Models as Tool Makers):
+[arxiv paper](https://arxiv.org/abs/2305.17126)

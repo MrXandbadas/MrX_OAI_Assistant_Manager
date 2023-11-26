@@ -3,6 +3,7 @@
 
 ---
 ## 🚀 Updates
+- **26th Nov 2023**: Gearing up to implement LATM through the user of autogen. Milestones, new branches, issues and projects are in the works to keep track of the change from this open-loop tool making use case to a closed-loop tool making system.
 - **24th Nov 2023**: Autogen by Microsoft has always been brilliant. Now with the addition of Assistants we can have agentic workflows with some serious frameworking behind the chats. Dcode is being tested in this application
 - **20th Nov 2023**: Assistants can now be given the list_assistants and swap_assistants function calls which enable you to list your assistants and change assistant by requesting to speak with another assistant in chat. Forget the "swapA" command when your assistants are tooled with these internal commands!
 - **19th Nov 2023**: Discord Bot implementation seems to work well. Code comming over the next 24H-48H. **BackBurner**

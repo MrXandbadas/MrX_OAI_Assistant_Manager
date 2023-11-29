@@ -1,13 +1,48 @@
 ## Staple functions to use in the chat
+import json
 
-def write_file(file_name, text):
+def write_file(file_name, content):
     with open(file_name, 'w') as f:
-        f.write(text)
+        f.write(content)
     return None
 
 def read_file(file_name):
     with open(file_name, 'r') as f:
         return f.read()
+    
+def save_json(file_name, data):
+    """
+    Saves a JSON file.
+
+    Args:
+        file_name (str): The name of the file to save.
+        data (dict): The data to save.
+
+    Returns:
+        None
+    """
+    with open(file_name, 'w') as outfile:
+        json.dump(data, outfile)
+
+
+    
+
+def read_json(file_name):
+    """
+    Reads a JSON file.
+
+    Args:
+        file_name (str): The name of the file to read.
+
+    Returns:
+        dict: The data from the file.
+    """
+    try:
+        with open(file_name) as json_file:
+            data = json.load(json_file)
+            return data
+    except FileNotFoundError:
+        return {}
     
 from IPython import get_ipython
 
@@ -43,7 +78,7 @@ def exec_sh(script):
         os.makedirs("tmp")
     #write the script to a file
     file_name = "tmp/tmp.sh"
-    write_to_file(file_name, script)
+    write_file(file_name, script)
     #make it executable
     subprocess.run(["chmod", "u+x", file_name])
     #run it

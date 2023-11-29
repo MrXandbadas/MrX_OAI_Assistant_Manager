@@ -8,6 +8,7 @@ org_id = os.environ.get('ORG_ID')
 api_key = os.environ.get('API_KEY')
 
 
+
 #### Main Program ####
 # Lets connect to openAI assistant Endpoints
 assistant = OAI_Assistant(api_key=api_key, organization=org_id)

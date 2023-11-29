@@ -1,4 +1,4 @@
-from assistant_manager import OAI_Assistant
+from assistant_manager.assistant_manager import OAI_Assistant
 import json
 
 #import env variables

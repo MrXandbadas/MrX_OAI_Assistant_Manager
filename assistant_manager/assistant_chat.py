@@ -129,7 +129,7 @@ class AssistantChat(Run_Manager, Tooling):
             ThreadMessage = self.create_message(thread_id=thread_id, role="user", content=message)
             user_message_id = ThreadMessage.id
             self.chat_ids.append(user_message_id)
-            self.perform_run(thread_id)
+            self.perform_run(thread_id, None)
 
             
     

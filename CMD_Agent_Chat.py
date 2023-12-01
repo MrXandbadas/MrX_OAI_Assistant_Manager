@@ -17,7 +17,7 @@ assistant = OAI_Assistant(api_key=api_key, organization=org_id)
 assistant_id = assistant.setup_assistant_chat()
 
 # Interact with the user to select a thread
-thread_id = assistant.swap_Thread()
+thread_id = assistant.user_chat_swap_Thread()
 
 
 

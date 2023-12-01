@@ -126,6 +126,33 @@ class OAI_Base(InterfaceBase):
             file_ids=file_ids,
             metadata=metadata,
         )
+    
+    def get_assistant_id_by_name(self, assistant_name, id=None):
+        """
+        Returns an assistant ID, when searched by name
+        Takes a ID if given
+
+        Args:
+            assistant_name: The name of the assistant to search for.
+            id: The ID of the assistant to search for if you dont have a name.
+
+        Returns:
+            assistant_id: The ID of the assistant.
+        """
+        
+        if id is None:
+            assistants = self.list_assistants(limit=30)
+            for i, assistant in enumerate(assistants.data):
+                if assistant.name == assistant_name:
+                    assistant_id = assistant.id
+                    self.logger.debug(f"Assistant ID found: {assistant_id}")
+                    return assistant_id
+            self.logger.error(f"Assistant ID not found: {assistant_name}")
+            return None
+        else:
+            self.logger.debug(f"Assistant ID found: {id}")
+            return id
+
 
     def list_assistants(self, limit=20, order="desc", after=None, before=None, extra_headers=None, extra_query=None, extra_body=None, timeout=None):
         """
@@ -524,126 +551,6 @@ class OAI_Base(InterfaceBase):
             timeout=timeout
         )
 
-    def create_run(self, thread_id, assistant_id, model=None, instructions=None, tools=None, metadata=None, extra_headers=None, extra_query=None, extra_body=None, timeout=None):
-            """
-            Create a run.
-
-            Args:
-                thread_id: The ID of the thread to create a run in.
-                assistant_id: The ID of the assistant to use to execute this run.
-                model: The ID of the Model to be used to execute this run. If a value is provided here, it will override the model associated with the assistant. If not, the model associated with the assistant will be used.
-                instructions: Override the default system message of the assistant. This is useful for modifying the behavior on a per-run basis.
-                tools: Override the tools the assistant can use for this run. This is useful for modifying the behavior on a per-run basis.
-                metadata: Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format. Keys can be a maximum of 64 characters long and values can be a maxium of 512 characters long.
-                extra_headers: Send extra headers
-                extra_query: Add additional query parameters to the request
-                extra_body: Add additional JSON properties to the request
-                timeout: Override the client-level default timeout for this request, in seconds
-            """
-            return self.client.threads.runs.create(
-                    thread_id=thread_id, 
-                    assistant_id=assistant_id, 
-                    model=model, 
-                    instructions=instructions, 
-                    tools=tools, 
-                    metadata=metadata,
-                    extra_headers=extra_headers,
-                    extra_query=extra_query,
-                    extra_body=extra_body,
-                    timeout=timeout
-            )
-
-    def retrieve_run(self, thread_id, run_id, extra_headers=None, extra_query=None, extra_body=None, timeout=None):
-            """
-            Retrieves a run.
-
-            Args:
-                thread_id: The ID of the thread the run belongs to.
-                run_id: The ID of the run to retrieve.
-                extra_headers: Send extra headers
-                extra_query: Add additional query parameters to the request
-                extra_body: Add additional JSON properties to the request
-                timeout: Override the client-level default timeout for this request, in seconds
-            """
-            return self.client.threads.runs.retrieve(
-                    thread_id=thread_id,
-                    run_id=run_id,
-                    extra_headers=extra_headers,
-                    extra_query=extra_query,
-                    extra_body=extra_body,
-                    timeout=timeout
-            )
-
-    def update_run(self, thread_id, run_id, metadata=None, extra_headers=None, extra_query=None, extra_body=None, timeout=None):
-            """
-            Modifies a run.
-
-            Args:
-                thread_id: The ID of the thread the run belongs to.
-                run_id: The ID of the run to update.
-                metadata: Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format. Keys can be a maximum of 64 characters long and values can be a maxium of 512 characters long.
-                extra_headers: Send extra headers
-                extra_query: Add additional query parameters to the request
-                extra_body: Add additional JSON properties to the request
-                timeout: Override the client-level default timeout for this request, in seconds
-            """
-            return self.client.threads.runs.update(
-                    thread_id=thread_id,
-                    run_id=run_id,
-                    metadata=metadata,
-                    extra_headers=extra_headers,
-                    extra_query=extra_query,
-                    extra_body=extra_body,
-                    timeout=timeout
-            )
-
-    def list_runs(self, thread_id, limit=20, order="desc", after=None, before=None, extra_headers=None, extra_query=None, extra_body=None, timeout=None):
-            """
-            Returns a list of runs belonging to a thread.
-
-            Args:
-                thread_id: The ID of the thread to list runs from.
-                limit: A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 20.
-                order: Sort order by the `created_at` timestamp of the objects. `asc` for ascending order and `desc` for descending order.
-                after: A cursor for use in pagination. `after` is an object ID that defines your place in the list. For instance, if you make a list request and receive 100 objects, ending with obj_foo, your subsequent call can include after=obj_foo in order to fetch the next page of the list.
-                before: A cursor for use in pagination. `before` is an object ID that defines your place in the list. For instance, if you make a list request and receive 100 objects, ending with obj_foo, your subsequent call can include before=obj_foo in order to fetch the previous page of the list.
-                extra_headers: Send extra headers
-                extra_query: Add additional query parameters to the request
-                extra_body: Add additional JSON properties to the request
-                timeout: Override the client-level default timeout for this request, in seconds
-            """
-            return self.client.threads.runs.list(
-                    thread_id=thread_id, 
-                    limit=limit, 
-                    order=order, 
-                    after=after, 
-                    before=before,
-                    extra_headers=extra_headers,
-                    extra_query=extra_query,
-                    extra_body=extra_body,
-                    timeout=timeout
-            )
-    
-    def cancel_run(self, thread_id, run_id, extra_headers=None, extra_query=None, extra_body=None, timeout=None):
-            """
-            Cancels a run.
-
-            Args:
-                thread_id: The ID of the thread the run belongs to.
-                run_id: The ID of the run to cancel.
-                extra_headers: Send extra headers
-                extra_query: Add additional query parameters to the request
-                extra_body: Add additional JSON properties to the request
-                timeout: Override the client-level default timeout for this request, in seconds
-            """
-            return self.client.threads.runs.cancel(
-                    thread_id=thread_id,
-                    run_id=run_id,
-                    extra_headers=extra_headers,
-                    extra_query=extra_query,
-                    extra_body=extra_body,
-                    timeout=timeout
-            )
 
     def submit_tool_outputs(self, thread_id, run_id, tool_outputs):
         """

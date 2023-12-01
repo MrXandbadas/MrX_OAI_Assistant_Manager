@@ -1,8 +1,8 @@
-from assistant_manager.oai_base import OAI_Base
+from assistant_manager.assistant_manager_update import Assistant_manager_update
 from assistant_manager.utils.file_operations import save_json, read_json
 import logging
 
-class OAI_Threads(OAI_Base):
+class OAI_Threads(Assistant_manager_update):
 
     def __init__(self, api_key, organization, timeout=None, log_level=logging.INFO):
         """

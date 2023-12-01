@@ -1,9 +1,9 @@
-from assistant_manager.oai_base import OAI_Base
+from assistant_manager.a_m_threads import OAI_Threads
 from assistant_manager.utils.file_operations import save_json, read_json
 import json
 import logging
 
-class Tooling(OAI_Base):
+class Tooling(OAI_Threads):
     def __init__(self, api_key, organization, timeout=None, log_level=logging.INFO):
         """
         Initializes an instance of AssistantManager.
@@ -180,3 +180,33 @@ class Tooling(OAI_Base):
         #return the assistant
         return assistant
     
+
+    def get_tool_list_by_names(self, tool_names):
+        """
+        Returns a list of tools from the tool names
+        """
+        tools = []
+        tools_list = []
+        for tool_name in tool_names:
+            tool = self.get_tool_by_name(tool_name)
+            tools.append(tool)
+
+        for selected_tool in tools:
+            #grab the correct info from the list
+            tool_name = selected_tool["tool_name"]
+            tool_required = selected_tool["tool_required"]
+            tool_description = selected_tool["tool_description"]
+            tool_properties = selected_tool["tool_properties"]
+            tool_meta_description = selected_tool["tool_meta_description"]
+            tool_metadata = self.make_autogen_tool_metadata(tool_name=tool_name, tool_required=tool_required, tool_description=tool_description, tool_properties=tool_properties, tool_meta_description=tool_meta_description)
+
+            if tool_metadata is not None:
+                correct_info = {
+                "type": "function",
+                "function": tool_metadata
+                }
+                #add the tool to the tools list
+                tools_list.append(correct_info)
+
+        
+        return tools_list

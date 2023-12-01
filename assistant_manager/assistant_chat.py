@@ -1,14 +1,17 @@
 import inspect
 import time
-from assistant_manager.a_m_threads import OAI_Threads
+from assistant_manager.runs_manager import Run_Manager
 from assistant_manager.assistant_tools import Tooling
-from assistant_manager.functions.dynamic import dynamic_functions
-from assistant_manager.utils import file_operations, special_functions
-from assistant_manager.utils.special_functions import append_new_tool_function_and_metadata
+
 import logging
 import json
 
-class AssistantChat(OAI_Threads, Tooling):
+#
+# This module contains the functions for chatting with an assistant.
+#
+
+
+class AssistantChat(Run_Manager, Tooling):
     def __init__(self, api_key, organization, timeout=None, log_level=logging.INFO):
         """
         Initializes an instance of AssistantManager.
@@ -112,7 +115,7 @@ class AssistantChat(OAI_Threads, Tooling):
                 self.re_tool()
                 continue
             elif message == "swapT":
-                thread_swapped = self.swap_Thread()
+                thread_swapped = self.user_chat_swap_Thread()
 
                 if thread_swapped is not None:
                     thread_id = thread_swapped
@@ -126,138 +129,13 @@ class AssistantChat(OAI_Threads, Tooling):
             ThreadMessage = self.create_message(thread_id=thread_id, role="user", content=message)
             user_message_id = ThreadMessage.id
             self.chat_ids.append(user_message_id)
-            run = self.create_run(thread_id=thread_id, assistant_id=self.assistant_id)
-            run_done = self.process_run(thread_id=thread_id, run_id=run.id)
-            #Wait for the run to complete
-            if run_done is not None:
-                print("Run Completed")
-                message_list = self.list_thread_history()
-                #check for a new message in the thread
-                for message in message_list:
-                        message_obj = self.retrieve_message(thread_id=thread_id, message_id=message)
-                        if message_obj.id is None:
-                            continue
-                        if message_obj.id in self.chat_ids:
-                            continue
-                        else:
-                            message
-                            self.message_user(f'assistant: {message_obj.content[0].text.value}')
-                            self.chat_ids.append(message_obj.id)
+            self.perform_run(thread_id)
 
-            else:
-                print(f"Else out? {run.status}")
+            
     
-    def process_run(self,thread_id, run_id):
-        while True:
-            run = self.retrieve_run(thread_id, run_id)
-            print(run.status)
-            if run.status == "completed":
-                message_list = self.list_messages(thread_id)
-                for message in message_list.data:
-                    if message.id in self.chat_ids:
-                        continue
-                    else:
-                        print(f'assistant: {message.content[0].text.value}')
-                        self.chat_ids.append(message.id)
-                        return message.content[0].text.value
-                break
-            elif run.status == "requires_action":
-                print("The run requires action.")
-                required_actions_json = run.required_action.submit_tool_outputs.model_dump_json(indent=4)
-                print(f"Required Actions: {required_actions_json}")
-                required_actions = json.loads(required_actions_json)
-                tools_output = []
-                for action in required_actions["tool_calls"]:
-                    if action["function"]["name"] == "append_new_tool_function_and_metadata":
-                        arguments = json.loads(action["function"]["arguments"])
-                        # get the function name
-                        function_name = arguments["function_name"]
-                        # get the function code
-                        function_code = arguments["function_code"]
-                        # get the metadata dict
-                        function_metadata = arguments["metadata_dict"]
-
-                        function_meta_description = arguments["tool_meta_description"]
-                        #Check if we need to json.loads the metadata
-                        if isinstance(function_metadata, str):
-                            function_metadata = json.loads(arguments["metadata_dict"])
-                        #print(f"Function name: {function_name}")
-                        self.logger.debug(f"Function code: {function_code}")
-                        #print(f"Function metadata: {function_metadata}")
-                        # append the function and metadata to the current assistant
-                        function_output = append_new_tool_function_and_metadata(function_name, function_code, function_metadata, function_meta_description)
-                        #function_output = append_new_tool_function_and_metadata(self, **(arguments))
-                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
-                        continue
-                        
-                    # Functions Dynamically registered in the utils/special_functions.py file    
-                    elif action["function"]["name"] in dir(special_functions):
-                        arguments = json.loads(action["function"]["arguments"])
-                        function_name = action["function"]["name"]
-                        function = getattr(special_functions, function_name)
-                        #check if the arguments are a string and if so convert to dict
-                        if isinstance(arguments, str):
-                            arguments = json.loads(arguments)
-                        # Does the function need self?
-                        if "assistant" in inspect.getfullargspec(function).args:
-                            function_output = function(self, **(arguments))
-                        else:
-                            function_output = function(**(arguments))
-                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
-
-                    # Functions Dynamically registered in the utils/file_operations.py file
-                    elif action["function"]["name"] in dir(file_operations):
-                        arguments = json.loads(action["function"]["arguments"])
-                        if isinstance(arguments, str):
-                            arguments = json.loads(arguments)
-                        function_name = action["function"]["name"]
-                        function = getattr(file_operations, function_name)
-                        #check if the arguments are a string and if so convert to dict
-                        function_output = function(**(arguments))
-                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
-
-                    #functions registerd on self
-                    elif action["function"]["name"] in dir(self):
-                        arguments = json.loads(action["function"]["arguments"])
-                        function_name = action["function"]["name"]
-                        function = getattr(self, function_name)
-                        #check if the arguments are a string and if so convert to dict
-                        print(f"ARGUMENTS {arguments}")
-                        if isinstance(arguments, str):
-                            arguments = json.loads(arguments)
-                        function_output = function(**(arguments))
-                        # give it time to process
-                        time.sleep(2)
-                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
-                        
-                    #functions registered in the dynamic_functions.py file
-                    elif action["function"]["name"] in dir(dynamic_functions):
-                        
-                        arguments = json.loads(action["function"]["arguments"])
-                        function_name = action["function"]["name"]
-                        function = getattr(dynamic_functions, function_name)
-                        #check if the arguments are a string and if so convert to dict
-                        function_output = function(**(arguments))
-                        # give it time to process
-                        time.sleep(2)
-                        
-                        tools_output.append({"tool_call_id": action["id"], "output": str(function_output)})
-                    else:
-                        print(f"Function {action['function']['name']} not found")
-                #message_user(f"Tools Output: {tools_output}")
-                self.submit_tool_outputs(thread_id, run.id, tools_output)
-
-            elif run.status == "failed":
-                print("The run failed.")
-                print(f"Error: {json.dumps(str(run), indent=4)}")
-                return None
-            else:
-                time.sleep(2)
-                continue
-
 
     
-    def swap_Thread(self):
+    def user_chat_swap_Thread(self):
         #Ask the user for the thread name or ID
         options = ["Name", "ID", "Multiple Choice (Save Locally)"]
         selected = self.get_multiple_choice_input(options)

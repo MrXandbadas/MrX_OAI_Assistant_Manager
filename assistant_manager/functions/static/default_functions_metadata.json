@@ -1,5 +1,5 @@
 {
-    "write_File": {
+    "write_file": {
         "tool_name": "write_file",
         "tool_required": "file_name",
         "tool_description": "Write the output to a file",
@@ -15,7 +15,7 @@
         },
         "tool_meta_description" : "This tool takes a text input and a file name and writes the text to the file. This overwrites any existing file with the same name."
     },
-    "read_File": {
+    "read_file": {
         "tool_name": "read_file",
         "tool_required": "file_name",
         "tool_description": "Read the content of a file",
@@ -187,6 +187,13 @@
             "tool_properties": {},
             "tool_meta_description" : "This tool takes no inputs and returns a list of all the assistants available in your organization. Only show the names as the IDs are what we use to run the swap_assistant when required"
         },
+        "list_autogen_assistants": {
+            "tool_name": "list_autogen_assistants",
+            "tool_required": "None",
+            "tool_description": "Lists the name of the autogen assistants in the workflow",
+            "tool_properties": {},
+            "tool_meta_description" : "This will return a list of the names of the autogen assistants in the workflow"
+        },
         "swap_assistant": {
             "tool_name": "swap_assistant",
             "tool_required": "new_assistant_id",
@@ -198,6 +205,42 @@
                 }
             },
             "tool_meta_description" : "This tool takes the ID of the new assistant to switch to and swaps you out with the selected assistant."
+        },
+        "list_system_tools": {
+            "tool_name": "list_system_tools",
+            "tool_required": "",
+            "tool_description": "Provides a list of all available system tool names",
+            "tool_properties": {},
+            "tool_meta_description": "Returns a list of all available tool names."
+        },
+        "get_tool_list_by_names": {
+            "tool_name": "get_tool_list_by_names",
+            "tool_required": "tool_names",
+            "tool_description": "Provides a list of all available tools",
+            "tool_properties": {
+                "tool_names": {
+                    "type": "array",
+                    "description": "Array of tool names to get the list of tools for."
+                }
+
+            },
+            "tool_meta_description": "Returns a usable function metadata list for use in enabling tools for assistants."
+        },
+        "enable_tools_autogen": {
+            "tool_name": "enable_tools_autogen",
+            "tool_required": "assistant_name, tools_list",
+            "tool_description": "Enables tools for the current assistant.",
+            "tool_properties": {
+                "assistant_id": {
+                    "type": "string",
+                    "description": "The ID of the assistant to enable tools for."
+                },
+                "tools_list": {
+                    "type": "array",
+                    "description": "A list of tools to enable."
+                }
+            },
+            "tool_meta_description": "Enables tools for the selected assistant. Ensure you have listed the assistants and the system tools, aswell as proceeding to get the tool list by names after deciding what system tools are required. Ensure the tool_list is the full metadata list, not just the names."
         }
     
 }

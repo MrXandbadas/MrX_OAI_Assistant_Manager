@@ -1,4 +1,4 @@
-from assistant_manager import OAI_Assistant
+from assistant_manager.assistant_manager import OAI_Assistant
 import json
 
 #import env variables
@@ -6,6 +6,7 @@ import os
 
 org_id = os.environ.get('ORG_ID')
 api_key = os.environ.get('API_KEY')
+
 
 
 #### Main Program ####
@@ -16,7 +17,7 @@ assistant = OAI_Assistant(api_key=api_key, organization=org_id)
 assistant_id = assistant.setup_assistant_chat()
 
 # Interact with the user to select a thread
-thread_id = assistant.swap_Thread()
+thread_id = assistant.user_chat_swap_Thread()
 
 
 

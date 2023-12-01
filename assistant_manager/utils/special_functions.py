@@ -90,7 +90,7 @@ def create_image_variation(assistant, image_path, n=1, size='1024x1024'):
 def append_new_tool_function_and_metadata(function_name: str, function_code: str, metadata: dict, tool_meta_description: str):
     try:
         # Logic to append new function code to dynamic_functions.py
-        with open('dynamic_functions.py', 'a') as file:
+        with open('assistant_manager/functions/dynamic/dynamic_functions.py', 'a') as file:
             file.write(f'\n\n{function_code}')
 
         
@@ -98,7 +98,7 @@ def append_new_tool_function_and_metadata(function_name: str, function_code: str
         metadata['tool_meta_description'] = tool_meta_description
 
         # Logic to append new metadata to functions_metadata.json
-        with open('functions_metadata.json', 'r+') as file:
+        with open('assistant_manager/functions/dynamic/functions_metadata.json', 'r+') as file:
             existing_metadata = json.load(file)
             # Lets run a check to see if the read metadata is hiding in a dict wrapped around our dict
             

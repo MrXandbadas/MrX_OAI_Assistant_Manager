@@ -18,17 +18,60 @@ class Tooling(OAI_Threads):
             None
         """
         super().__init__(api_key=api_key, organization=organization, timeout=timeout, log_level=log_level)
+        self.autogen_assustants = []
+
+    def list_autogen_assistants(self):
+        """
+        Returns a list of autogen Assistants
+        """
+        return self.autogen_assistants
+    
+
+
+    def make_autogen_tool_metadata(self, tool_name, tool_required, tool_description, tool_properties, tool_meta_description):
+        """
+        Registers metadata for a tool.
+
+        Args:
+            tool_name (str): The name of the tool.
+            tool_required (str): The ID of the tool.
+            tool_description (str): The description of the tool.
+            tool_schema (dict): The schema of the tool.
+            tool_meta_description (str): The meta description of the tool.
+
+        Returns:
+            None
+        """
+        # Define the metadata for the tool
+        metadata = {
+                "name": tool_name,
+                "parameters": {
+                    "type": "object",
+                    "properties": tool_properties,
+                    "required": [tool_required]
+                },
+                "description": tool_meta_description
+        }
+        print("Making autogen tool metadata")
+        # Return the metadata
+        return metadata
+
+    
 
     def get_tool_by_name(self, tool_name):
         """
         Returns a tool object by name
         """
         tools = self.load_tool_metadata()
+        if tools is None:
+            self.logger.error("No tools found")
+            return None
+            
         self.logger.info(f"Getting tool by name: {tool_name}")
         for tool in tools:
-            if tool["tool_name"] == tool_name:
+            if tool == tool_name:
                 self.logger.debug(f"Tool found: {tool}")
-                return tool
+                return tools[tool]
         
         self.logger.error(f"Tool not found: {tool_name}")
         return None
@@ -77,17 +120,25 @@ class Tooling(OAI_Threads):
         Returns:
             dict: A dict of tool metadata.
         """
+        #with open(file_name) as json_file:
+        #    data = json.load(json_file)
+        #    return data
         #attempt to read the functions_metadata.json file
-        tool_metadata_dict0 = read_json('assistant_manager/functions/static/default_functions_metadata.json')
+        tool_metadata_dict0 = {}
         #print(tool_metadata_dict0)
         #print("------")
-        tool_metadata_dict1 = read_json('assistant_manager/functions/dynamic/functions_metadata.json')
+        tool_metadata_dict1 = {}
         #print(tool_metadata_dict1)
+
+        with open('assistant_manager/functions/static/default_functions_metadata.json') as json_file:
+            tool_metadata_dict0 = json.load(json_file)
+
+        with open('assistant_manager/functions/dynamic/functions_metadata.json') as json_file:
+            tool_metadata_dict1 = json.load(json_file)
+
         # Merge the two dicts into a new dict
         tool_metadata = {**tool_metadata_dict0, **tool_metadata_dict1}
         
-
-
         #if the file is empty, return an empty dict
         if tool_metadata is None:
             self.logger.error("No tool metadata found assistant_tools.py")
@@ -97,6 +148,7 @@ class Tooling(OAI_Threads):
             self.tool_metadata = tool_metadata
             self.logger.info("Tool metadata loaded")
             self.logger.debug(f"Tool metadata: {tool_metadata}")
+            
             return self.tool_metadata
 
     def save_tool_metadata(self, tool_name, tool_required, tool_description, tool_schema):
@@ -192,21 +244,22 @@ class Tooling(OAI_Threads):
             tools.append(tool)
 
         for selected_tool in tools:
-            #grab the correct info from the list
-            tool_name = selected_tool["tool_name"]
-            tool_required = selected_tool["tool_required"]
-            tool_description = selected_tool["tool_description"]
-            tool_properties = selected_tool["tool_properties"]
-            tool_meta_description = selected_tool["tool_meta_description"]
-            tool_metadata = self.make_autogen_tool_metadata(tool_name=tool_name, tool_required=tool_required, tool_description=tool_description, tool_properties=tool_properties, tool_meta_description=tool_meta_description)
+            if isinstance(selected_tool, dict):  # Check if selected_tool is a dictionary
+                # Grab the correct info from the dictionary
+                tool_name = selected_tool.get("tool_name")
+                tool_required = selected_tool.get("tool_required")
+                tool_description = selected_tool.get("tool_description")
+                tool_properties = selected_tool.get("tool_properties")
+                tool_meta_description = selected_tool.get("tool_meta_description")
+                tool_metadata = self.make_autogen_tool_metadata(tool_name=tool_name, tool_required=tool_required, tool_description=tool_description, tool_properties=tool_properties, tool_meta_description=tool_meta_description)
 
-            if tool_metadata is not None:
-                correct_info = {
-                "type": "function",
-                "function": tool_metadata
-                }
-                #add the tool to the tools list
-                tools_list.append(correct_info)
+                if tool_metadata is not None:
+                    correct_info = {
+                        "type": "function",
+                        "function": tool_metadata
+                    }
+                    print(correct_info)
+                    # Add the tool to the tools list
+                    tools_list.append(correct_info)
 
-        
         return tools_list

@@ -2,6 +2,7 @@ import inspect
 import time
 from assistant_manager.runs_manager import Run_Manager
 from assistant_manager.assistant_tools import Tooling
+from assistant_manager.autogen_assistant_manager import AutogenAssistantManager
 
 import logging
 import json
@@ -11,7 +12,7 @@ import json
 #
 
 
-class AssistantChat(Run_Manager, Tooling):
+class AssistantChat(Run_Manager, AutogenAssistantManager):
     def __init__(self, api_key, organization, timeout=None, log_level=logging.INFO):
         """
         Initializes an instance of AssistantManager.
@@ -29,12 +30,26 @@ class AssistantChat(Run_Manager, Tooling):
 
 
        
-    def re_tool(self, autogen=False):
-        self.message_user("Enabling tools")
-        #Grab the tools from the assistant function metadata
-        tools = self.load_tool_metadata()
-        choices = self.get_multiple_choice_multiple_input(tools)
-        print(choices)
+    def re_tool(self, autogen=False, tool_names=None):
+        choices = [] or None
+        if tool_names is None:
+            self.message_user("Enabling tools")
+            #Grab the tools from the assistant function metadata
+            tools = self.load_tool_metadata()
+            choices = self.get_multiple_choice_multiple_input(tools)
+            print(choices)
+        else:
+            tools = self.load_tool_metadata()
+            choices = []
+            # Grab the tools from the assistant function metadata
+            for tool_name in tool_names:
+                for tool in tools:
+                    #Returns just a list of the tool names
+                    if tool == tool_name:
+                        choices.append(tools[tool])
+            #print(choices)
+            
+                        
         #Collect the information about the selection. int has been returned which we need to use to grab the correct dict item
         tools_list = []
         correct_info = [{
@@ -51,9 +66,11 @@ class AssistantChat(Run_Manager, Tooling):
             tool_required = choice["tool_required"]
             tool_description = choice["tool_description"]
             tool_properties = choice["tool_properties"]
-            if autogen:
+            tool_metadata = None
+            if autogen is True:
                 tool_meta_description = choice["tool_meta_description"]
                 tool_metadata = self.make_autogen_tool_metadata(tool_name=tool_name, tool_required=tool_required, tool_description=tool_description, tool_properties=tool_properties, tool_meta_description=tool_meta_description)
+                #print(f"AutoGen Tool Metadata: {tool_meta_description}")
             else:
                 tool_metadata = self.make_tool_metadata(tool_name=tool_name, tool_required=tool_required, tool_description=tool_description, tool_properties=tool_properties)
             # add the tool to the metadata dict
@@ -65,23 +82,30 @@ class AssistantChat(Run_Manager, Tooling):
                 }
                 #add the tool to the tools list
                 tools_list.append(correct_info)
+                print(f"Correct info: {json.dumps(correct_info, indent=4)}")
             else:
                 self.message_user("Tool not added, there was an error with the metadata")
             
         #Check if the user wants to enable the tools
-        self.message_user("Are you sure you want to enable these tools? (Y/N)")
-        choice = self.get_multiple_choice_input(["Y", "N"])
+        if tool_names is None:
+            self.message_user("Are you sure you want to enable these tools? (Y/N)")
+            choice = self.get_multiple_choice_input(["Y", "N"])
 
-        if choice == "Y":
-            #enable the tools
+            if choice == "Y":
+                #enable the tools
+                if autogen == False:
+                    assistant_new = self.enable_tools(self.assistant_id, tools_list)
+                    self.assistant_id = assistant_new.id
+                return tools_list
+
+            else:
+                self.message_user("Tools not enabled")
+                return False, assistant_new.id
+        else:
             if autogen == False:
                 assistant_new = self.enable_tools(self.assistant_id, tools_list)
                 self.assistant_id = assistant_new.id
-            return True, tools_list
-
-        else:
-            self.message_user("Tools not enabled")
-            return False, assistant_new.id
+            return tools_list
         
         
 

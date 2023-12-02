@@ -11,66 +11,12 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-
-
-ossinsight_api_schema = {
-  "name": "ossinsight_data_api",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "question": {
-        "type": "string",
-        "description": (
-            "Enter your GitHub data question in the form of a clear and specific question to ensure the returned data is accurate and valuable. "
-            "For optimal results, specify the desired format for the data table in your request."
-        ),
-      }
-    },
-    "required": [
-      "question"
-    ]
-  },
-  "description": "This is an API endpoint allowing users (analysts) to input question about GitHub in text format to retrieve the realted and structured data."
-}
-
-def get_ossinsight(question):
-    """
-    Retrieve the top 10 developers with the most followers on GitHub.
-    """
-    url = "https://api.ossinsight.io/explorer/answer"
-    headers = {"Content-Type": "application/json"}
-    data = {
-        "question": question,
-        "ignoreCache": True
-    }
-
-    response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200:
-        answer = response.json()
-    else:
-        return f"Request to {url} failed with status code: {response.status_code}"
-
-    report_components = []
-    report_components.append(f"Question: {answer['question']['title']}")
-    if answer['query']['sql']  != "":
-        report_components.append(f"querySQL: {answer['query']['sql']}")
-
-    if answer.get('result', None) is None or len(answer['result']['rows']) == 0:
-        result = "Result: N/A"
-    else:
-        result = "Result:\n  " + "\n  ".join([str(row) for row in answer['result']['rows']])
-    report_components.append(result)
-
-    if  answer.get('error', None) is not None:
-        report_components.append(f"Error: {answer['error']}")
-    return "\n\n".join(report_components)
-
 from autogen.agentchat.contrib.gpt_assistant_agent import GPTAssistantAgent
 from autogen import UserProxyAgent
-from assistant_manager import OAI_Assistant
+from assistant_manager.assistant_manager import OAI_Assistant
 from openai.types.beta.assistant import Assistant
 import assistant_manager.functions.dynamic.dynamic_functions as dynamic_functions
-from utils import file_operations, special_functions
+from assistant_manager.utils import file_operations, special_functions
 
 
 async def create_agent(Assistant_config,assistantManager: OAI_Assistant):
@@ -91,12 +37,11 @@ async def create_agent(Assistant_config,assistantManager: OAI_Assistant):
     return assistant_id
 async def main_app():
         # Create an assistant manager{
-    api_key = "APIKEYHERE"
-    org_id = "ORGIDHERE"
-
+    org_id = 'org'
+    api_key='apikey'
     assistantManager = OAI_Assistant(api_key=api_key, organization=org_id)
 
-    retooling, tool_list = assistantManager.re_tool(autogen=True)
+    tool_list = assistantManager.re_tool(autogen=True, tool_names=["append_new_tool_function_and_metadata"])
 
     oss_analyst_default = {
     "name":"Customer Service Assistant_01",
@@ -129,38 +74,17 @@ async def main_app():
         print(f"Found existing assistant with id: {assistant_id}")
 
     
+    llm_config_notool = {
+        "config_list": config_list,
+        "assistant_id": assistant_id,
+    }
 
     llm_config = {
         "config_list": config_list,
         "assistant_id": assistant_id,
         "tools": tool_list
     }
-    function_mapy = {}
-
-    if retooling == True:
-        for tool in tool_list:
-            if tool["type"] == "function":
-                #Check tht it is in dynamic_functions if not check special_functions or file_operations
-                if tool["function"]["name"] in dynamic_functions.__dict__:
-                    print(f"Found {tool['function']['name']} in dynamic_functions")
-                    # Now it has been found add it to the function_mapy using a callable function trick
-                    function: callable = dynamic_functions.__dict__[tool["function"]["name"]]
-                    function_mapy[tool["function"]["name"]] = function
-                elif tool["function"]["name"] in special_functions.__dict__:
-                    print(f"Found {tool['function']['name']} in special_functions")
-                    # Now it has been found add it to the function_mapy
-                    function: callable = special_functions.__dict__[tool["function"]["name"]]
-                    function_mapy[tool["function"]["name"]] = function
-                elif tool["function"]["name"] in file_operations.__dict__:
-                    print(f"Found {tool['function']['name']} in file_operations")
-                    # Now it has been found add it to the function_mapy
-                    function: callable = file_operations.__dict__[tool["function"]["name"]] 
-                    function_mapy[tool["function"]["name"]] = function            
-    else:
-        function_mapy = {
-            "oos_insight": get_ossinsight,
-        }
-
+    function_mapy = assistantManager.get_function_map(tool_list)
 
 
     oss_analyst = GPTAssistantAgent(
@@ -172,6 +96,7 @@ async def main_app():
         ),
         llm_config=llm_config,
     )
+    print(f"fmapy: {function_mapy}")
     oss_analyst.register_function(
     function_map=function_mapy,
     )

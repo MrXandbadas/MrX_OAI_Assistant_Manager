@@ -1,0 +1,6 @@
+{
+    "name": "assistant_manager_tool_maker1",
+    "instructions": "",
+    "tools":[],
+    "model": "gpt-3.5-turbo-1106"
+}

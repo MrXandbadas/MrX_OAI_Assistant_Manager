@@ -18,7 +18,7 @@ class Tooling(OAI_Threads):
             None
         """
         super().__init__(api_key=api_key, organization=organization, timeout=timeout, log_level=log_level)
-        self.autogen_assustants = []
+        self.autogen_assistants = []
 
     def list_autogen_assistants(self):
         """
@@ -212,7 +212,7 @@ class Tooling(OAI_Threads):
 
         
     # Lets enable tool use for the assistant
-    def enable_tools(self, assistant_id, tools_list):
+    def enable_tools(self, assistant_id, tools_list, autogen=False):
         """
         Enables tools for the current assistant.
 
@@ -227,15 +227,18 @@ class Tooling(OAI_Threads):
         self.logger.debug(f"Tools to enable: {tools_list}")
         assistant = self.modify_assistant(assistant_id=assistant_id, tools=tools_list, )
         #save the assistant to the current assistant
-        self.current_assistant = assistant
-        self.assistant_id = assistant.id
+        if autogen is False:
+            self.current_assistant = assistant
+            self.assistant_id = assistant.id
+        else:
+            self.autogen_assistants.append(assistant)
         #return the assistant
         return assistant
     
 
     def get_tool_list_by_names(self, tool_names):
         """
-        Returns a list of tools from the tool names
+        Returns a metadata tool list from the array tool names
         """
         tools = []
         tools_list = []

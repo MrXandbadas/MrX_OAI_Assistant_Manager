@@ -51,6 +51,27 @@
         },
         "tool_meta_description" : "This tool takes a shell script and executes it in the shell. The output of the script is returned."
     },
+    "analyze_image_with_vision": {
+        "tool_name": "analyze_image_with_vision",
+        "tool_required": "prompt, image_url",
+        "tool_description": "Analyzes an image using the GPT-4 vision model.",
+        "tool_properties": {
+            "prompt": {
+                "type": "string",
+                "description": "Text description for the desired image."
+            },
+            "image_url": {
+                "type": "string",
+                "description": "URL of the image to be analyzed."
+            },
+            "max_tokens": {
+                "type": "integer",
+                "description": "Maximum number of tokens for the response.",
+                "default": 300
+            }
+        },
+        "tool_meta_description": "This function takes an OpenAI client instance and an image URL, and uses the GPT-4 vision model to analyze the content of the image, returning a descriptive response."
+    },
     "generate_image": {
         "tool_name": "generate_image",
         "tool_required": "prompt",

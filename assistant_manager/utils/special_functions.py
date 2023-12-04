@@ -6,13 +6,68 @@ def get_stock_price(symbol):
     price = symbol.history(period='1d')['Close'].iloc[0]
     return price
 
-#from assistant_manager import OAI_Assistant
+#from assistant_manager.assistant_manager import OAI_Assistant
+
+def analyze_image_with_vision(assistant,prompt, image_url, max_tokens=300):
+
+    '''
+
+    Analyzes an image using the GPT-4 vision model.
+
+
+
+    :param OAI_Assistant: OAI_Assistant instance configured with API key.
+
+    :param image_url: URL of the image to be analyzed.
+
+    :param max_tokens: Maximum number of tokens for the response.
+
+    :return: The analysis response from the model.
+
+    '''
+
+    response = assistant.open_ai.chat.completions.create(
+
+        model="gpt-4-vision-preview",
+
+        messages=[
+
+            {
+
+                "role": "user",
+
+                "content": [
+
+                    {"type": "text", "text": prompt},
+
+                    {
+
+                        "type": "image_url",
+
+                        "image_url": {"url": image_url},
+
+                    },
+
+                ],
+
+            }
+
+        ],
+
+        max_tokens=max_tokens,
+
+    )
+
+
+
+    return response.choices[0] if response.choices else None
+
 
 def generate_image(assistant, prompt, model='dall-e-2', n=1, size='1024x1024', quality='standard', style='vivid', response_format='url' or 'b64_json'):
     """
     Creates an image given a prompt using OpenAI's image generation API.
 
-    :param client: OAI_Assistant instance configured with API key.
+    :param OAI_Assistant: OAI_Assistant instance configured with API key.
     :param prompt: A text description of the desired image(s).
     :param model: The model to use for image generation. Defaults to 'dall-e-2', can be changed to dall-e-3
     :param n: The number of images to generate. Defaults to 1.
@@ -41,7 +96,7 @@ def edit_image(assistant, image_path, mask_path, prompt, n=1, size='1024x1024'):
     """
     Creates an edited or extended image given an original image and a prompt.
 
-    :param client: OAI_Assistant instance configured with API key.
+    :param OAI_Assistant: OAI_Assistant instance configured with API key.
     :param image_path: Path to the original PNG image to be edited.
     :param mask_path: Path to the mask PNG image defining areas to be edited.
     :param prompt: A text description of the changes to be made to the image.
@@ -68,7 +123,7 @@ def create_image_variation(assistant, image_path, n=1, size='1024x1024'):
     """
     Creates a variation of a given image using OpenAI's image variation API.
 
-    :param client: OAI_Assistant instance configured with API key.
+    :param OAI_Assistant: OAI_Assistant instance configured with API key.
     :param image_path: Path to the source PNG image for creating variations.
     :param n: The number of variations to generate. Defaults to 1.
     :param size: The size of the generated images. Defaults to '1024x1024'.

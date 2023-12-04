@@ -8,6 +8,24 @@ def get_stock_price(symbol):
 
 #from assistant_manager.assistant_manager import OAI_Assistant
 
+def enable_tools_autogen(assistant, assistant_id, tool_list):
+    """
+    Enables the tools for the assistant
+
+    Args:
+        assistant_id (str): The ID of the assistant.
+        tool_list (list): The list of tool names to enable.
+
+    Returns:
+        None
+    """
+    # Use the list of tool names to get the metadata
+    tool_metadata = assistant.get_tool_list_by_names(tool_list)
+    # Enable the tools
+    enabled_tools=assistant.enable_tools(assistant_id=assistant_id, tool_list=tool_metadata)
+
+    return enabled_tools
+
 def analyze_image_with_vision(assistant,prompt, image_url, max_tokens=300):
 
     '''

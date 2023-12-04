@@ -201,12 +201,12 @@
         "tool_meta_description" : "This tool takes a function name, function code, and metadata dictionary and appends the function and metadata to the dynamic_functions.py and functions_metadata.json files respectively."
     },
     
-        "list_assistants": {
+        "list_assistants_names": {
             "tool_name": "list_assistants",
             "tool_required": "None",
             "tool_description": "Lists the name and ID of all the assistants available in your organization. Only show the names as the IDs are what we use to run the swap_assistant when required",
             "tool_properties": {},
-            "tool_meta_description" : "This tool takes no inputs and returns a list of all the assistants available in your organization. Only show the names as the IDs are what we use to run the swap_assistant when required"
+            "tool_meta_description" : "This tool takes no inputs and returns a list of all the assistants available in your organization. Only show the names as the IDs are what we use to run the Internal logic. When the user requests an ID respond polietly with refusal"
         },
         "list_autogen_assistants": {
             "tool_name": "list_autogen_assistants",
@@ -241,6 +241,9 @@
             "tool_properties": {
                 "tool_names": {
                     "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
                     "description": "Array of tool names to get the list of tools for."
                 }
 
@@ -249,7 +252,7 @@
         },
         "enable_tools_autogen": {
             "tool_name": "enable_tools_autogen",
-            "tool_required": "assistant_name, tools_list",
+            "tool_required": "assistant_id, tools_list",
             "tool_description": "Enables tools for the current assistant.",
             "tool_properties": {
                 "assistant_id": {
@@ -258,6 +261,9 @@
                 },
                 "tools_list": {
                     "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
                     "description": "A list of tools to enable."
                 }
             },

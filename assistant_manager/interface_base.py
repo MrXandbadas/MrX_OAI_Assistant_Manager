@@ -33,7 +33,15 @@ class InterfaceBase():
 
 
     def get_multiple_choice_input(self, choices):
-        """Overwrite this function to change how the user is messaged"""
+        """Overwrite this function to change how the user is messaged
+        
+        args:
+            choices (list): A list of choices to display to the user
+
+        returns:
+            choice (int): The choice the user selected (1-indexed - returns the index of the choice in the list)
+
+        """
         # Display the options with corresponding numbers
         options = [f"{i+1}. {choice}" for i, choice in enumerate(choices)]
         self.message_user(f"Please select one of the following options:\n{', '.join(options)}")

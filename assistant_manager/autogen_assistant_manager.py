@@ -78,10 +78,43 @@ class AutogenAssistantManager(Tooling):
                 # If it doesn't, create it and get the id
                 # assistant_default["id"] = await create_agent(assistant_default, assistantManager)
                 #Save the ID
-                new_id = await self.create_agent(assistant_default)
-                assistant_default["id"] = new_id
-                #add the complete new info to the new list
-                new_list.append(assistant_default)
+                self.message_user(f"I want to create a new {assistant_default['name']} with id: {assistant_default['id']}")
+                self.message_user(f"Please confirm the creation of the assistant {assistant_default['name']}")
+                options = ["Yes", "No"]
+                choice = self.get_multiple_choice_input(options)
+                # Choice is a int
+                if choice == 0:
+                    # Yes
+                    self.message_user(f"Creating {assistant_default['name']}...")
+                    new_id = await self.create_agent(assistant_default)
+                    assistant_default["id"] = new_id
+                    #add the complete new info to the new list
+                    new_list.append(assistant_default)
+                else:
+                    # No. Check if the user would like to select an existing assistant
+                    self.message_user(f"Would you like to select an existing assistant?")
+                    options = ["Yes", "No"]
+                    choice = self.get_multiple_choice_input(options)
+                    # Choice is a int
+                    if choice == 0:
+                        # Yes
+                        self.message_user(f"Please select an existing assistant")
+                        assistant_list = self.list_assistants_names()
+                        options = list(assistant_list.keys())
+                        choice = self.get_multiple_choice_input(options)
+                        # Choice is a int. Lets dynamically return the correct assistant
+                        assistant_default["id"] = assistant_list[options[choice]]
+                        #add the complete new info to the new list
+                        new_list.append(assistant_default)
+                        
+                    else:
+                        # No
+                        self.message_user(f"Skipping {assistant_default['name']}...")
+                        pass
+
+
+        # add the assistant to the autogen_assistants
+        self.autogen_assistants.append(new_list[0])
 
         return new_list
     

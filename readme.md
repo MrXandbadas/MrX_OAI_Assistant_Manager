@@ -33,9 +33,17 @@ EXAMPLE CORRECT FUNCTION CALLING METATDATA FORMAT:
 ---
 
 ## Overview 📖
-This repository contains two Python scripts for interacting with OpenAI's API:
-- `assistant_manager.py`: Manages API interactions. 
-- `example_cmd_chat.py`: Demonstrates a command-line interface using the above class file. 
+This repository contains several Python scripts, each serving a unique purpose in the management and operation of OpenAI's AI assistants. These scripts offer a range of functionalities, including thread management, assistant swapping, dynamic function calling, and more, providing a versatile toolset for effective assistant interaction and customization.
+
+### Key Scripts and Their Functions
+- `CMD_Agent_Chat.py`: Manages the command line interface for interacting with OpenAI assistants.
+- `file_operations.py`: Provides basic file operations like reading and writing, crucial for managing data and configurations.
+- `special_functions.py`: Contains specialized functions that extend the capabilities of assistants, such as stock price retrieval and image generation.
+- `dynamic_functions.py`: A core script that allows for the dynamic addition and modification of assistant functionalities.
+- `assistant_tools.py`, `assistant_manager.py`, `assistant_manager_update.py`, `assistant_chat.py`: These scripts work together to manage assistants, handle chat functionalities, and update assistant capabilities.
+- `autogen_assistant_manager.py`, `a_m_threads.py`: Manage autogen assistants and assistant thread operations, enhancing the chat experience and assistant management.
+- `init.py`, `interface_base.py`, `oai_base.py`, `runs_manager.py`: Initialization, base classes and managers that form the foundation of the assistant management system.
+
 
 ### Commands 💻
 - `swapT` - Swap Thread

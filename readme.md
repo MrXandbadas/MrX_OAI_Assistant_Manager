@@ -35,7 +35,7 @@ EXAMPLE CORRECT FUNCTION CALLING METATDATA FORMAT:
 ## Overview 📖
 This repository contains two Python scripts for interacting with OpenAI's API:
 - `assistant_manager.py`: Manages API interactions. 
-- `example_cmd_chat.py`: Demonstrates a command-line interface using the above class file. 
+- `CMD_Agent_Chat.py`: Demonstrates a command-line interface using the above class file. 
 
 ### Commands 💻
 - `swapT` - Swap Thread
@@ -47,8 +47,8 @@ This repository contains two Python scripts for interacting with OpenAI's API:
 2. Set up your OpenAI credentials in your environments.
 
 ## Usage to Make Your Own App 🌈
-- `assistant_manager.py`: Initialize with OpenAI credentials and use its methods.
-- `example_cmd_chat.py`: Check this file out to see how you would use certain functions and lay out your code flow. Also demonstrates a command-line interface in action.
+- `assistant_manager.py`: Initialize with OpenAI credentials and use its methods. ** RESTRUCTURED -- UPDATED README COMMING SOON**
+- `CMD_Agent_Chat.py`: Check this file out to see how you would use certain functions and lay out your code flow. Also demonstrates a command-line interface in action.
 
 Start a chat. Select an Assistant from the available assistants on your account. (A way to create assistants is coming)
 Select a thread (if you have previous ones saved locally via the script) 
@@ -70,7 +70,7 @@ We'd love to see how you use this script in your projects. Share your stories an
 
 #### Engaging with the AI: The Chat Interface
 
-The `example_cmd_chat.py` script is at the heart of user interaction. It serves as the gateway for users to communicate their needs and for the AI to respond with precision.
+The `CMD_Agent_Chat.py` script is at the heart of user interaction. It serves as the gateway for users to communicate their needs and for the AI to respond with precision.
 
 ##### Starting the Chat
 ![Imagine a gif of a terminal chat like conversation](./screen_capture_demo1.gif)

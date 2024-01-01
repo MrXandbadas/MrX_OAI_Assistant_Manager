@@ -1,4 +1,7 @@
+import base64
 import json
+
+import requests
 from yfinance import Ticker
 
 def get_stock_price(symbol):
@@ -160,25 +163,120 @@ def create_image_variation(assistant, image_path, n=1, size='1024x1024'):
         return None
 
     # Function to append a new tool function and its metadata
-def append_new_tool_function_and_metadata(function_name: str, function_code: str, metadata: dict, tool_meta_description: str):
+def append_new_tool_function_and_metadata(function_name: str, function_code: str, metadata_dict: str, tool_meta_description: str):
     try:
+
+        # Turn the metadata_dict into a dict
+        metadata_dict = json.loads(metadata_dict)
+        #Turn the tool_meta_description into a dict
+        tool_meta_description = json.loads(tool_meta_description)
         # Logic to append new function code to dynamic_functions.py
         with open('assistant_manager/functions/dynamic/dynamic_functions.py', 'a') as file:
             file.write(f'\n\n{function_code}')
 
         
         # Add the tool_meta_description to the metadata dict
-        metadata['tool_meta_description'] = tool_meta_description
+        metadata_dict['tool_meta_description'] = tool_meta_description
 
         # Logic to append new metadata to functions_metadata.json
         with open('assistant_manager/functions/dynamic/functions_metadata.json', 'r+') as file:
             existing_metadata = json.load(file)
             # Lets run a check to see if the read metadata is hiding in a dict wrapped around our dict
             
-            existing_metadata[function_name] = metadata
+            existing_metadata[function_name] = metadata_dict
             file.seek(0)  # Reset file position to the beginning.
             json.dump(existing_metadata, file, indent=4)
     except Exception as e:
         print(f"An error occurred while appending the new function: {e}")
-        return False
+        return e
     return True  # Indication that the function and metadata have been successfully appended
+
+
+#from assistant_manager.assistant_manager import OAI_Assistant
+
+
+def list_autogen_assistants(assistant):
+    """
+    Lists the autogen assistants that have been created.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
+    # Get the list of assistants
+    assistant_list = assistant.list_autogen_assistants()
+    # Filter the list to only include autogen assistants
+    #autogen_assistants = [assistant for assistant in assistant_list if assistant['name'].startswith('autogen_')]
+    # Print the list of autogen assistants
+    return assistant_list
+
+
+
+def list_system_tools():
+    """
+    Lists the system tools that have been created.
+
+    Args:
+        assistant: OAI_Assistant instance configured with API key.
+
+    Returns:
+        tool_list: A list of system tools.
+    """
+    tool_dict = {}
+    with open('assistant_manager/functions/static/default_functions_metadata.json') as json_file:
+        tool_metadata_dict0 = json.load(json_file)
+        # Grab just the tool name and tool tool_meta_description
+        for tool in tool_metadata_dict0:
+            tool_dict[tool] = tool_metadata_dict0[tool]['tool_meta_description']
+
+
+
+    with open('assistant_manager/functions/dynamic/functions_metadata.json') as json_file:
+        tool_metadata_dict1 = json.load(json_file)
+        # Grab just the tool name and tool tool_meta_description
+        for tool in tool_metadata_dict1:
+            tool_dict[tool] = tool_metadata_dict1[tool]['tool_meta_description']
+
+    # Merge the two dicts into a new dict
+    tool_list = tool_dict
+    
+    return tool_list
+
+def base64loader(image):
+    #Open file and return its base64 value
+    with open(image, "rb") as image_file:
+        encodedImage = base64.b64encode(image_file.read())
+        return encodedImage
+
+#Functions for image agent proxy
+def get_image(image):
+    #Check if the image is a jpeg, png, or svg image.
+    # If it is, then return the base64 encoded image.
+    # If it is not and it is a link, then download the image and return the base64 encoded image.
+
+    #Check if the image is a link
+    if image.startswith("http"):
+        #Download the image
+        downloadedImage = requests.get(image)
+        #Encode the image
+        encodedImage = base64.b64encode(downloadedImage.content)
+        #Return the encoded image
+        return encodedImage
+    else:
+        # Check if the image is a jpeg, png, or svg image.
+        # If it is, then return the base64 encoded image.
+
+        #Check if the image is a jpeg
+        if image.endswith(".jpeg"):
+           return base64loader(image)
+        #Check if the image is a png
+        elif image.endswith(".png"):
+            return base64loader(image)
+        #Check if the image is a svg
+        elif image.endswith(".svg"):
+            return base64loader(image)
+        else:
+            #Return an error message
+            return "Error: Image is not a jpeg, png, svg image or URL."

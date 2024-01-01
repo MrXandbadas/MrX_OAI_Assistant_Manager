@@ -27,7 +27,8 @@ class GPTAssistantAgent(ConversableAgent):
         overwrite_instructions: bool = False,
         human_input_mode: Optional[str] = "TERMINATE",
         function_map: Optional[Dict[str, Callable]] = None,
-        max_consecutive_auto_reply: Optional[int] = None
+        max_consecutive_auto_reply: Optional[int] = None,
+        assistant_manager=None,
     ):
         """
         Args:
@@ -49,6 +50,7 @@ class GPTAssistantAgent(ConversableAgent):
             overwrite_instructions (bool): whether to overwrite the instructions of an existing assistant.
         """
         # Use AutoGen OpenAIWrapper to create a client
+        self.assistant_manager = assistant_manager
         oai_wrapper = OpenAIWrapper(**llm_config)
         if len(oai_wrapper._clients) > 1:
             logger.warning("GPT Assistant only supports one OpenAI client. Using the first client in the list.")
@@ -90,6 +92,18 @@ class GPTAssistantAgent(ConversableAgent):
                 logger.warning(
                     "overwrite_instructions is False. Provided instructions will be used without permanently modifying the assistant in the API."
                 )
+            tools = llm_config.get("tools", [])
+            if tools is None:
+                logger.warning("No tools were provided for given assistant. Using existing tools from assistant API.")
+            else:
+                logger.warning("Tools were provided for given assistant. Using provided tools.")
+                #print(tools)
+                self._openai_assistant = self._openai_client.beta.assistants.update(
+                    assistant_id=openai_assistant_id,
+                    tools=tools,
+                )
+
+
 
         super().__init__(
             name=name,

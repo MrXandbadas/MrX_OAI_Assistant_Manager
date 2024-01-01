@@ -1,3 +1,5 @@
+import inspect
+import json
 from assistant_manager.assistant_tools import Tooling
 from assistant_manager.interface_base import InterfaceBase
 import logging
@@ -49,7 +51,7 @@ class AutogenAssistantManager(Tooling):
             if isinstance(tools, list):
                 # If tools is a list, add each tool to the configuration
                 llm_config["tools"] = [{"type": "function", "function": tool} for tool in tools]
-                print(f"Tools: {llm_config['tools']}")
+                #print(f"Tools: {llm_config['tools']}")
             else:
                 llm_config["tools"] = tools
 
@@ -67,29 +69,44 @@ class AutogenAssistantManager(Tooling):
         for assistant_default in assistant_list:
             # Check if the assistant exists
             # Print the names
-            print(assistant_default["name"])
+            #print(assistant_default["name"])
 
             if assistant_default["name"] in assistant_dict_name_id.keys():
                 # If it does, get the id
                 assistant_default["id"] = assistant_dict_name_id[assistant_default["name"]]
+
+                #print(f"Found {assistant_default['name']} with id {assistant_default['id']}")
                 #add the complete new info to the new list
                 new_list.append(assistant_default)
             else:
                 # If it doesn't, create it and get the id
                 # assistant_default["id"] = await create_agent(assistant_default, assistantManager)
                 #Save the ID
-                self.message_user(f"I want to create a new {assistant_default['name']} with id: {assistant_default['id']}")
+                self.message_user(f"I want to create a new {assistant_default['name']}")
                 self.message_user(f"Please confirm the creation of the assistant {assistant_default['name']}")
                 options = ["Yes", "No"]
                 choice = self.get_multiple_choice_input(options)
                 # Choice is a int
-                if choice == 0:
+                print(f"Choice: {choice}")
+                if choice == "Yes":
                     # Yes
                     self.message_user(f"Creating {assistant_default['name']}...")
+                    # Update the Tools with the appropriate metadata
+                    # Check if the tools are a list
+                    if isinstance(assistant_default["tools"], list):
+                        #Check if its not empty
+                        if len(assistant_default["tools"]) > 0:
+                            #Grab the list of tools and get the function list
+                            function_list = assistant_default["tools"]
+                            # Now we have the function list, we can update the metadata
+                            new_tool_list = self.get_tool_list_by_names(function_list)
+                            # Now we have the new tool list, we can update the assistant_default
+                            assistant_default["tools"] = new_tool_list
                     new_id = await self.create_agent(assistant_default)
                     assistant_default["id"] = new_id
                     #add the complete new info to the new list
                     new_list.append(assistant_default)
+                    return
                 else:
                     # No. Check if the user would like to select an existing assistant
                     self.message_user(f"Would you like to select an existing assistant?")
@@ -102,19 +119,17 @@ class AutogenAssistantManager(Tooling):
                         assistant_list = self.list_assistants_names()
                         options = list(assistant_list.keys())
                         choice = self.get_multiple_choice_input(options)
-                        # Choice is a int. Lets dynamically return the correct assistant
-                        assistant_default["id"] = assistant_list[options[choice]]
+                        # Choice is a string of option
+                        assistant_default["id"] = assistant_list[choice]
                         #add the complete new info to the new list
-                        new_list.append(assistant_default)
                         
                     else:
                         # No
                         self.message_user(f"Skipping {assistant_default['name']}...")
                         pass
 
-
-        # add the assistant to the autogen_assistants
-        self.autogen_assistants.append(new_list[0])
+        #Dump the list in a readable format
+        print(f"New List: {json.dumps(new_list, indent=4)}")
 
         return new_list
     
@@ -134,8 +149,9 @@ class AutogenAssistantManager(Tooling):
                     function: callable = dynamic_functions.__dict__[tool["function"]["name"]]
                     function_mapy[tool["function"]["name"]] = function
                 elif tool["function"]["name"] in special_functions.__dict__:
+                    #if assistant is an argument, add self automatically to the function call
                     print(f"Found {tool['function']['name']} in special_functions")
-                    # Now it has been found add it to the function_mapy
+                    # If not, just add the function
                     function: callable = special_functions.__dict__[tool["function"]["name"]]
                     function_mapy[tool["function"]["name"]] = function
                 elif tool["function"]["name"] in file_operations.__dict__:
@@ -143,5 +159,8 @@ class AutogenAssistantManager(Tooling):
                     # Now it has been found add it to the function_mapy
                     function: callable = file_operations.__dict__[tool["function"]["name"]] 
                     function_mapy[tool["function"]["name"]] = function 
+                else:
+            
+                    print(f"Could not find {tool['function']['name']} in any of the modules")
 
         return function_mapy

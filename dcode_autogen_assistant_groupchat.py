@@ -203,7 +203,7 @@ async def main_app():
     groupchat = autogen.GroupChat(agents=agents, messages=[], max_round=10)
     manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
 
-    user_proxy.initiate_chat(digitalkodie, message="Please find the 10 latest papers on the advancements in Large Language Models and their applications in Assistants or Agents")
+    user_proxy.initiate_chat(digitalkodie, message="find papers on LLM applications from arxiv in the last week, create a markdown table of different domains.")
     teachable_agent.learn_from_user_feedback()
     teachable_agent.close_db()
 

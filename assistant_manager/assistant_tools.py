@@ -24,7 +24,14 @@ class Tooling(OAI_Threads):
         """
         Returns a list of autogen Assistants
         """
-        return self.autogen_assistants
+
+        # Iterate through the autogen assistants and return their name as key and id as value
+        assistant_dict = {}
+        for i, assistant in enumerate(self.autogen_assistants):
+            assistant_dict[assistant.name] = assistant.id
+        self.logger.debug(f"Listing Autogen Assistant names: {assistant_dict}")
+        return assistant_dict
+    
     
 
 
@@ -87,7 +94,7 @@ class Tooling(OAI_Threads):
         self.logger.debug(f"Listing Assistant names: {assistant_dict}")
         return assistant_dict
     
-    def list_system_tools(self):
+    def list_system_tools(self) -> list:
         """
         returns a list of the tool names
         """
@@ -104,7 +111,7 @@ class Tooling(OAI_Threads):
         #}
 
         for tool in tools:
-            tool_names.append(tool.get("tool_name"))
+            tool_names.append(tools[tool]["tool_name"])
         
         self.logger.debug(f"Listing System Tool names: {tool_names}")
 
@@ -231,7 +238,11 @@ class Tooling(OAI_Threads):
             self.current_assistant = assistant
             self.assistant_id = assistant.id
         else:
-            self.autogen_assistants.append(assistant)
+            #Check if the assistant is already in the list
+            if assistant not in self.autogen_assistants:
+                #if not, add it
+                self.autogen_assistants.append(assistant)
+            
         #return the assistant
         return assistant
     

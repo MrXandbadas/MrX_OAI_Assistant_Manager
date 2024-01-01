@@ -27,7 +27,6 @@ class OAI_Assistant(AssistantChat,InterfaceBase):
         
         #Set up some defaults to keep track of the current assistant, thread and run
         self.current_assistant = None or OAI_Assistant
-        self.autogen_assistants = None
 
 
 

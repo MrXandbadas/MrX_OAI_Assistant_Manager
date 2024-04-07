@@ -3,7 +3,7 @@ from openai import OpenAI
 from typing import List, Optional
 from openai import OpenAI
 from openai._types import NotGiven, NOT_GIVEN
-from openai.types.beta.threads import ThreadMessage
+from openai.types.beta.threads import Message as ThreadMessage
 from assistant_manager.interface_base import InterfaceBase
 
 
